@@ -18,7 +18,7 @@ int main() {
 		file >> ws;
 
 		string line {""};
-		while (file >> line) {
+		while (getline(file,line,'\n')) {
 			if (line != "$")
 				chapter_names.push_back(line);
 			else
@@ -48,32 +48,42 @@ int main() {
 		{
 			// List all questions
 			cout << endl;
-			for (unsigned int i = 0; i < questions.size(); ++i)
-				cout << i + 1 << ":" << questions[i] << endl;
+			if (questions.size() > 0)
+				for (unsigned int i = 0; i < questions.size(); ++i)
+					cout << i + 1 << ":" << questions[i] << endl;
+			else
+				cout << "The list is empty." << endl;
 
 		}
 		break;
 
 		case '2':
-			quizz_launcher(questions, answers, 0, questions.size() - 1, questions.size());
+			if (questions.size() > 0 && questions.size() == answers.size())
+				quizz_launcher(questions, answers, 0, questions.size() - 1, questions.size());
+			else
+				cout << "\nThere's not a single question to display." << endl;
 			break;
 
 		case '3':
 		{
 			cout << endl;
-			display_chapters(chapter_names);
-			unsigned int chapter_choice {0};
-			cin >> chapter_choice;
-			cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-			if (is_valid_chapter(chapter_choice, chapters.size() / 2)) {
-				unsigned int first_question = chapters[(chapter_choice - 1) * 2], last_question = chapters[(chapter_choice - 1) * 2 + 1] ;
-				int questions_size = last_question - first_question + 1;
-				quizz_launcher(questions, answers, first_question, last_question, questions_size);
-			}				
+			if (chapter_names.size() > 0) {
+				display_chapters(chapter_names);
+				unsigned int chapter_choice{ 0 };
+				cin >> chapter_choice;
+				cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+				if (is_valid_chapter(chapter_choice, chapters.size() / 2)) {
+					unsigned int first_question = chapters[(chapter_choice - 1) * 2], last_question = chapters[(chapter_choice - 1) * 2 + 1];
+					int questions_size = last_question - first_question + 1;
+					quizz_launcher(questions, answers, first_question, last_question, questions_size);
+				}
+				else
+					cout << "\nThis chapter doesn't exist." << endl;
+			}
 			else
-				cout << "\nThis chapter doesn't exist." << endl;
-
+				cout << "There is no chapters available." << endl;
 		}
 			break;
 
@@ -84,7 +94,7 @@ int main() {
 			int index {0};
 			vector<int> failed_indexes;
 			
-			ifstream file("failed.txt");
+			ifstream file("failed_questions.txt");
 			if (file.is_open()) {
 				while (file >> index)
 					failed_indexes.push_back(index);
@@ -105,9 +115,20 @@ int main() {
 
 		break;
 
-		default:
+		case '5':
+		{
+			cout << endl;
+			string answer {""};
+			getline(cin, answer, '$');
+		}
+			break;
+
+		case 'x':
 			cout << "\nGoodbye !" << endl;
 			return 0;
+			break;
+
+		default:
 			break;
 		}
 

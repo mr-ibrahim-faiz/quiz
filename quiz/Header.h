@@ -32,6 +32,7 @@ void display_choices() {
 	cout << "[2] Complete Quiz" << endl;
 	cout << "[3] Chapter Quiz" << endl;
 	cout << "[4] Failed Questions Quiz" << endl;
+	cout << "[5] Free Word" << endl;
 	cout << "[x] Exit" << endl;
 }
 
@@ -54,7 +55,7 @@ void quizz_launcher(vector<string> questions, vector<string> answers,
 	fstream file;
 	string line{ "" };
 
-	file.open("failed.txt");
+	file.open("failed_questions.txt");
 	if (file.is_open()) {
 		getline(file, line, '$');
 		file.ignore(numeric_limits<streamsize>::max(), '\n');
@@ -63,7 +64,7 @@ void quizz_launcher(vector<string> questions, vector<string> answers,
 	else
 		cerr << "Error: Unable to open file." << endl;
 
-	file.open("failed.txt", ios::out | ios::trunc);
+	file.open("failed_questions.txt", ios::out | ios::trunc);
 	if (file.is_open()) {
 		file << line;
 		file.close();
@@ -125,7 +126,7 @@ void quizz_launcher(vector<string> questions, vector<string> answers,
 			case '$':
 			{
 				ofstream file;
-				file.open("failed.txt", ios::ate | ios::app);
+				file.open("failed_questions.txt", ios::ate | ios::app);
 
 				if (file.is_open()) {
 					file << *it << " ";
@@ -144,7 +145,7 @@ void quizz_launcher(vector<string> questions, vector<string> answers,
 		}
 	}
 
-	file.open("failed.txt", ios::ate | ios::app);
+	file.open("failed_questions.txt", ios::ate | ios::app);
 
 	if (file.is_open()) {
 		file << "$";
@@ -158,7 +159,7 @@ void quizz_launcher(vector<string> questions, vector<string> answers,
 void quizz_launcher(vector<string> questions, vector<string> answers, vector<int> indexes) {
 	if (indexes.size() > 0) {
 		fstream file;
-		file.open("failed.txt", ios::out | ios::trunc);
+		file.open("failed_questions.txt", ios::out | ios::trunc);
 		if (file.is_open())
 			file.close();
 		else
@@ -214,7 +215,7 @@ void quizz_launcher(vector<string> questions, vector<string> answers, vector<int
 				case '$':
 				{
 					ofstream file;
-					file.open("failed.txt", ios::ate | ios::app);
+					file.open("failed_questions.txt", ios::ate | ios::app);
 
 					if (file.is_open()) {
 						file << *it << " ";
@@ -233,7 +234,7 @@ void quizz_launcher(vector<string> questions, vector<string> answers, vector<int
 			}
 		}
 
-		file.open("failed.txt", ios::ate | ios::app);
+		file.open("failed_questions.txt", ios::ate | ios::app);
 
 		if (file.is_open()) {
 			file << "$";
