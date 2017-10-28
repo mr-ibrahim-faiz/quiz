@@ -3,7 +3,6 @@
 #include<iostream>
 using std::cin;
 using std::cout;
-using std::cout;
 using std::cerr;
 using std::endl;
 using std::ws;
@@ -370,7 +369,36 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 		}
 	}
 	else {
-		indexes = get_random_int_distribution(questions.size());
+		// gets retry indexes from resume file
+		vector<size_t> retry_indexes = get_retry_indexes(resume_file_address);
+
+		if(retry_indexes.empty())
+			indexes = get_random_int_distribution(questions.size());
+		else {
+			// informs the user that there are questions to practice with
+			cout << "There are questions available to practice with. Do you want to ignore them ? " << endl;
+
+			string choice { "" };
+			while (getline(cin, choice)) {
+				if (choice.size() != 1)
+					choice = "0";
+
+				switch (choice[0]) {
+				case '$':
+					indexes = get_random_int_distribution(questions.size());
+					cout << endl;
+					break;
+				case '*':
+					return;
+				default:
+					cout << "\nPlease enter a valid choice." << endl;
+					continue;
+				}
+
+				break;
+			}
+		}
+
 	}
 
 	size_t indexes_size = indexes.size();
