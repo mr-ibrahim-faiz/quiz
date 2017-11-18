@@ -25,6 +25,9 @@ using std::out_of_range;
 #include<limits>
 using std::numeric_limits;
 
+#include<algorithm>
+using std::find;
+
 // retrieves quiz information from files
 void get_questions_and_answers(const string& file_address, vector<string>& questions, vector<string>& answers)
 // retrieves questions and answers from the questions_answers files
@@ -370,13 +373,13 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 	}
 	else {
 		// gets retry indexes from resume file
-		vector<size_t> retry_indexes = get_retry_indexes(resume_file_address);
+		retry_indexes = get_retry_indexes(resume_file_address);
 
 		if(retry_indexes.empty())
 			indexes = get_random_int_distribution(questions.size());
 		else {
 			// informs the user that there are questions to practice with
-			cout << "There are questions available to practice with. Do you want to ignore them ? " << endl;
+			cout << "There are questions available to practice with. Do you want to proceed? " << endl;
 
 			string choice { "" };
 			while (getline(cin, choice)) {
@@ -398,7 +401,6 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 				break;
 			}
 		}
-
 	}
 
 	size_t indexes_size = indexes.size();
@@ -440,11 +442,23 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 
 			switch (answer[0]) {
 			case '$':
+			{
 				cout << endl;
 				review();
-				retry_indexes.push_back(indexes[i]);
+
+				// adds the question index in the retry indexes if not present
+				vector<size_t>::iterator it = find(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
+				if (it == retry_indexes.end())
+					retry_indexes.push_back(indexes[i]);
+			}	
 				break;
 			case '*':
+			{
+				// removes the question index from the retry indexes if present
+				vector<size_t>::iterator it = find(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
+				if (it != retry_indexes.end())
+					retry_indexes.erase(it);
+			}
 				break;
 			default:
 				cout << "\nPlease enter a valid choice." << endl;
