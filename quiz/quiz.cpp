@@ -60,8 +60,13 @@ void get_questions_and_answers(const string& file_address, vector<string>& quest
 void display_main_menu(const string& resume_file_address) {
 	cout << "[1] List Questions" << endl;
 	cout << "[2] " << ((is_quiz_to_resume(resume_file_address)? "Resume Quiz" : "Complete Quiz")) << endl;
+
+	// gets retry indexes from resume file
+	vector<size_t> indexes = get_retry_indexes(resume_file_address);
+
 	if(are_questions_to_practice(resume_file_address))
-		cout << "[3] Practice" << endl;
+		cout << "[3] Practice (" << indexes.size() << ")" << endl;
+
 	cout << "[x] Exit" << endl;
 }
 
