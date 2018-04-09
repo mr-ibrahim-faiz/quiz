@@ -22,8 +22,11 @@ void list_elements(const vector<T>&);
 // gets a random distribution of unique unsigned integers
 vector<size_t> get_random_int_distribution(const size_t&);
 
-// create resume file if it doesn't exit
-void create_resume_file_if(const string&);
+// copies a file
+void copy_file(const string&, const string&);
+
+// creates file if it doesn't exit
+void create_file_if(const string&);
 
 // writes elements of a vector on file
 template<typename T>
@@ -37,8 +40,8 @@ void write_single_element(const T&, const string&, ios::fmtflags, const string&)
 template<typename T>
 void fill_with_pattern(const T&, const size_t, const string&, ios::fmtflags, const string&);
 
-// sets up the resume file
-void set_resume_file(const string&, const vector<size_t>&);
+// sets up resume and save file
+void set_resume_file(const string&, const string&, const vector<size_t>&);
 
 // enables user to review failed question
 void review();

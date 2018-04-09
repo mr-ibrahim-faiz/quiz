@@ -21,6 +21,15 @@ try
 
 	// initializes resume file address
 	string resume_file_address { "resume_quiz.txt" };
+	
+	// creates resume file if it doesn't exist
+	create_file_if(resume_file_address);
+
+	// initializes save file address
+	string save_file { "save.txt" };
+
+	// creates save file if it doesn't exist
+	create_file_if(save_file);
 
 	// display main menu
 	display_main_menu(resume_file_address);

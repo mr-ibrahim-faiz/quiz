@@ -18,6 +18,7 @@ using std::random_shuffle;
 using std::fstream;
 using std::ifstream;
 using std::ofstream;
+using std::ios_base;
 
 #include<stdexcept>
 using std::out_of_range;
@@ -82,7 +83,7 @@ void list_elements(const vector<T>& vec)
 template void list_elements<string>(const vector<string>& vec);
 
 // gets a random distribution of unique unsigned integers
-vector<size_t> get_random_int_distribution(const size_t& size) 
+vector<size_t> get_random_int_distribution(const size_t& size)
 // returns a shuffled vector of unique integers ranging from 0 to size-1
 {
 	vector<size_t> indexes;
@@ -95,9 +96,24 @@ vector<size_t> get_random_int_distribution(const size_t& size)
 	return indexes;
 }
 
-// create resume file if it doesn't exit
-void create_resume_file_if(const string& file_address)
-// create the resule file if it doesn't exit
+// copies a file
+void copy_file(const string& src_filename, const string& dst_filename)
+// copies the source file src_filename into a destination file dst_filename
+{
+	ifstream src(src_filename, ios::binary);
+	if (src.is_open()) {
+		ofstream dst(dst_filename, ios::binary);
+		if (dst.is_open()) {
+			dst << src.rdbuf();
+			dst.close();
+		}
+		src.close();
+	}
+}
+
+// creates file if it doesn't exit
+void create_file_if(const string& file_address)
+// create the file if it doesn't exit
 {
 	ifstream file;
 	file.open(file_address);
@@ -113,7 +129,7 @@ void create_resume_file_if(const string& file_address)
 
 // writes elements of a vector on file
 template<typename T>
-void write_elements(const vector<T>& vec, const string& file_name, ios::fmtflags flag, const string& delimiter, const string& period) 
+void write_elements(const vector<T>& vec, const string& file_name, ios_base::openmode flag, const string& delimiter, const string& period)
 // write elements of a vector on file_name
 // elements are delimited by the delimiter
 // the writing is ended by the period
@@ -138,11 +154,11 @@ void write_elements(const vector<T>& vec, const string& file_name, ios::fmtflags
 		cerr << "Error: Unable to open file." << endl;
 }
 
-template void write_elements<size_t>(const vector<size_t>& vec, const string& file_name, ios::fmtflags flag, const string& delimiter, const string& period);
+template void write_elements<size_t>(const vector<size_t>& vec, const string& file_name, ios_base::openmode flag, const string& delimiter, const string& period);
 
 // writes a single element on a file
 template<typename T>
-void write_single_element(const T& t, const string& file_name, ios::fmtflags flag, const string& period) 
+void write_single_element(const T& t, const string& file_name, ios_base::openmode flag, const string& period)
 // write a single element on file_name
 // the writing is ended by the period
 {
@@ -157,11 +173,11 @@ void write_single_element(const T& t, const string& file_name, ios::fmtflags fla
 		cerr << "Error: Unable to open file." << endl;
 }
 
-template void write_single_element<size_t>(const size_t& t, const string& file_name, ios::fmtflags flag, const string& period);
+template void write_single_element<size_t>(const size_t& t, const string& file_name, ios_base::openmode flag, const string& period);
 
 // fills a file with a given pattern
 template<typename T>
-void fill_with_pattern(const T& t, const size_t time, const string& file_name, ios::fmtflags flag, const string& period) 
+void fill_with_pattern(const T& t, const size_t time, const string& file_name, ios_base::openmode flag, const string& period)
 // fills a file with a pattern a given number of times
 // the writing is ended by the period
 {
@@ -178,10 +194,13 @@ void fill_with_pattern(const T& t, const size_t time, const string& file_name, i
 		cerr << "Error: Unable to open file." << endl;
 }
 
-template void fill_with_pattern<string>(const string& t, const size_t time, const string& file_name, ios::fmtflags flag, const string& period);
+template void fill_with_pattern<string>(const string& t, const size_t time, const string& file_name, ios_base::openmode flag, const string& period);
 
-// sets up the resume file
-void set_resume_file(const string& resume_file_address, const vector<size_t>& indexes) {
+// sets up resume and save file
+void set_resume_file(const string& resume_file_address, const string& save_file, const vector<size_t>& indexes) {
+	// copies the resume file
+	copy_file(resume_file_address, save_file);
+
 	// fills the first line with whitespaces
 	fill_with_pattern(" ", 6, resume_file_address, ios::out | ios::trunc, "$\n");
 
@@ -197,7 +216,7 @@ void review() {
 }
 
 // checks if there's a quiz to resume
-bool is_quiz_to_resume(const string& resume_file_address) 
+bool is_quiz_to_resume(const string& resume_file_address)
 // checks if there's a quiz to resume (i.e. valid question_number in resume file) and returns true or false
 {
 	bool can_be_resumed { false };
@@ -246,7 +265,7 @@ bool are_questions_to_practice(const string& resume_file_address)
 
 // gets resume file information
 void get_resume_information(string const& resume_file, size_t& current_question
-	, vector<size_t>& indexes, vector<size_t>& retry_indexes) 
+	, vector<size_t>& indexes, vector<size_t>& retry_indexes)
 // retrieves current question, questions order index and retry indexes from resume file
 {
 	ifstream file;
@@ -282,7 +301,7 @@ void get_resume_information(string const& resume_file, size_t& current_question
 }
 
 // gets retry indexes
-vector<size_t> get_retry_indexes(const string& resume_file_address) 
+vector<size_t> get_retry_indexes(const string& resume_file_address)
 // retrieves retry indexes from resume file
 {
 	ifstream file;
@@ -334,8 +353,11 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 	// initializes resume file address
 	string resume_file_address { "resume_quiz.txt" };
 
+	// initializes save file address
+	string save_file { "save.txt" };
+
 	// creates resume file if it doesn't exist
-	create_resume_file_if(resume_file_address);
+	create_file_if(resume_file_address);
 
 	// checks if there's a quiz to resume
 	bool can_be_resumed = is_quiz_to_resume(resume_file_address);
@@ -410,8 +432,8 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 
 	size_t indexes_size = indexes.size();
 
-	// sets up the resume file
-	set_resume_file(resume_file_address, indexes);
+	// sets up resume and save files
+	set_resume_file(resume_file_address, save_file, indexes);
 
 	for (size_t i = first_question_index; i < indexes_size; ++i) {
 		// displays current question number
@@ -419,6 +441,9 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 
 		// adds current question_number to resume file
 		write_single_element(i + 1, resume_file_address, ios::in | ios::out, "");
+
+		// adds current question_number to save file
+		write_single_element(i + 1, save_file, ios::in | ios::out, "");
 
 		// displays current question
 		cout << questions[indexes[i]] << '\n' << endl;
@@ -455,7 +480,7 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 				vector<size_t>::iterator it = find(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
 				if (it == retry_indexes.end())
 					retry_indexes.push_back(indexes[i]);
-			}	
+			}
 				break;
 			case '*':
 			{
@@ -475,7 +500,11 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 
 			break;
 		}
+		// copies the resume file
+		copy_file(resume_file_address, save_file);
 
+		// saves retry_index to save file
+		write_elements(retry_indexes, save_file, ios::app, " ", " $");
 	}
 
 	// fills the first line with whitespaces
@@ -486,7 +515,7 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 }
 
 // simple quiz launcher
-void simple_quiz_launcher(const vector<string>& questions, const vector<string>& answers, const vector<size_t>& indexes) 
+void simple_quiz_launcher(const vector<string>& questions, const vector<string>& answers, const vector<size_t>& indexes)
 // (1) displays a questions, wait for user's answer,
 // (2) displays the right answer
 // indexes provides the questions concerned and their order of display
