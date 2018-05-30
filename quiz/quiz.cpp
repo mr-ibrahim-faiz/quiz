@@ -43,7 +43,7 @@ void get_questions_and_answers(const string& file_address, vector<string>& quest
 
 		while (getline(file, line, '$')) {
 			questions.push_back(line);
-			file >> ws;
+			file.ignore(1, '\n');
 			getline(file, line, '$');
 			answers.push_back(line);
 			file >> ws;
@@ -212,7 +212,11 @@ void set_resume_file(const string& resume_file_address, const string& save_file,
 void review() {
 	string review { "" };
 	getline(cin, review, '$');
-	getchar();
+
+	while (cin.peek() != '\n')
+		getline(cin, review, '$');
+
+	getchar(); // deals with the newline
 }
 
 // checks if there's a quiz to resume
@@ -451,6 +455,10 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 		// gets answer
 		string answer { "" };
 		getline(cin, answer, '$');
+
+		while(cin.peek() != '\n')
+			getline(cin, answer, '$');
+
 		getchar(); // deals with the newline left in cin
 
 		// exit when answer = exit
@@ -535,6 +543,10 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 		// gets answer
 		string answer { "" };
 		getline(cin, answer, '$');
+
+		while (cin.peek() != '\n')
+			getline(cin, answer, '$');
+
 		getchar(); // deals with the newline left in cin
 
 		// displays current question's answer
