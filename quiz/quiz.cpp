@@ -550,6 +550,7 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 		getchar(); // deals with the newline left in cin
 
 		// displays current question's answer
+		cout << "\n[" << i << "]\n";
 		cout << '\n' << answers[indexes[i]] << endl;
 
 		if (i != indexes_size - 1)
