@@ -468,7 +468,8 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 			return;
 		}
 
-		// displays current question's answer
+		// displays current question's answer and index
+		cout << "\n[" << indexes[i] << "]\n";
 		cout << '\n' << answers[indexes[i]] << endl;
 
 		// asks if the user will retry the question and handles choice
@@ -484,10 +485,13 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 				cout << endl;
 				review();
 
-				// adds the question index in the retry indexes if not present
-				vector<size_t>::iterator it = find(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
-				if (it == retry_indexes.end())
-					retry_indexes.push_back(indexes[i]);
+				// adds the question index in the retry indexes
+				retry_indexes.push_back(indexes[i]);
+
+				//// adds the question index in the retry indexes if not present
+				//vector<size_t>::iterator it = find(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
+				//if (it == retry_indexes.end())
+				//	retry_indexes.push_back(indexes[i]);
 			}
 				break;
 			case '*':
@@ -549,8 +553,8 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 
 		getchar(); // deals with the newline left in cin
 
-		// displays current question's answer
-		cout << "\n[" << i << "]\n";
+		// displays current question's answer and index
+		cout << "\n[" << indexes[i] << "]\n";
 		cout << '\n' << answers[indexes[i]] << endl;
 
 		if (i != indexes_size - 1)
