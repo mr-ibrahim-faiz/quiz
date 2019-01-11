@@ -69,7 +69,7 @@ try
 				// shuffle indexes
 				shuffle_vector(indexes);
 
-				simple_quiz_launcher(questions, answers, indexes);
+				simple_quiz_launcher(questions, answers, indexes, resume_file_address);
 			}
 			else
 				cout << "Please enter a valid choice." << endl;

@@ -2,6 +2,7 @@
 
 #include<iostream>
 using std::ios;
+using std::ios_base;
 
 #include<vector>
 using std::vector;
@@ -62,8 +63,11 @@ vector<size_t> get_retry_indexes(const string&);
 template<typename T>
 void shuffle_vector(vector<T>&);
 
+// copies line from a file to another
+void copy_lines(const string&, const string&, const size_t&, ios_base::openmode);
+
 // quiz launcher
 void quiz_launcher(const vector<string>&, const vector<string>&);
 
 // simple quiz launcher
-void simple_quiz_launcher(const vector<string>&, const vector<string>&, const vector<size_t>&);
+void simple_quiz_launcher(const vector<string>&, const vector<string>&, const vector<size_t>&, const string&);

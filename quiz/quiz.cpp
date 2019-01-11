@@ -346,6 +346,25 @@ void shuffle_vector(vector<T>& vec) {
 
 template void shuffle_vector<size_t>(vector<size_t>& vec);
 
+// copies line from a file to another
+void copy_lines(const string& src_filename, const string& dst_filename, const size_t& n, ios_base::openmode mode = ios::out)
+// copies the first n lines from src_filename into dst_filename
+{
+	fstream src(src_filename, ios::in | ios::binary);
+	if(src.is_open()){
+		fstream dst(dst_filename, ios::out | ios::binary);
+		if(dst.is_open()){
+			for(size_t i = 0; i < n; ++i){
+				string sinput;
+				getline(src, sinput);
+				dst << sinput << '\n';
+			}
+			dst.close();
+		}
+		src.close();
+	}
+}
+
 // quiz launcher
 void quiz_launcher(const vector<string>& questions, const vector<string>& answers)
 // (1) checks the resume file and determines if there's a quiz to resume
@@ -527,11 +546,20 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 }
 
 // simple quiz launcher
-void simple_quiz_launcher(const vector<string>& questions, const vector<string>& answers, const vector<size_t>& indexes)
+void simple_quiz_launcher(const vector<string>& questions, const vector<string>& answers, const vector<size_t>& indexes, const string& resume_file)
 // (1) displays a questions, wait for user's answer,
 // (2) displays the right answer
 // indexes provides the questions concerned and their order of display
 {
+	// makes a copy of the retry indexes
+	vector<size_t> updated_indexes { indexes };
+
+	// exit sequence
+	const string exit_sequence { "exit" };
+
+	// save file
+	const string save_file { "save.txt" };
+
 	// question number to start with
 	size_t first_question_index { 0 };
 
@@ -548,16 +576,53 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 		string answer { "" };
 		getline(cin, answer, '$');
 
-		while (cin.peek() != '\n')
-			getline(cin, answer, '$');
+		while (cin.peek() != '\n') getline(cin, answer, '$');
 
 		getchar(); // deals with the newline left in cin
+
+		// checks if the user wants to exit
+		if(answer == exit_sequence) return;
 
 		// displays current question's answer and index
 		cout << "\n[" << indexes[i] << "]\n";
 		cout << '\n' << answers[indexes[i]] << endl;
 
-		if (i != indexes_size - 1)
-			cout << endl;
+		// checks if questions should be removed from the resume file 
+		cout << "\nRemove from Retry list ? ";
+		while(getline(cin, answer)){
+			if(answer.length() != 1) answer.clear(); // the answer is invalid
+
+			switch(answer[0]){
+			case '$':
+				{
+					// removes the question index from the retry indexes if present
+					vector<size_t>::iterator it = find(updated_indexes.begin(), updated_indexes.end(), indexes[i]);
+					if(it != updated_indexes.end()) updated_indexes.erase(it);
+				}
+				break;
+
+			case '*':
+				{
+					// adds the question index in the retry indexes
+					updated_indexes.push_back(indexes[i]);
+				}
+				break;
+
+			default:
+				cout << "\nPlease enter a valid choice.\n";
+				continue;
+			}
+
+			break;
+		}
+
+		// copies the resume file
+		copy_file(resume_file, save_file);
+
+		// updates the resume file
+		copy_lines(save_file, resume_file, 2);	
+		write_elements(updated_indexes, resume_file, ios::app, " ", " $");
+
+		if (i != indexes_size - 1) cout << '\n';
 	}
 }
