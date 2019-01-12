@@ -12,6 +12,7 @@ using std::streamsize;
 using std::chrono::system_clock;
 
 #include<algorithm>
+using std::count;
 using std::random_shuffle;
 
 #include<fstream>
@@ -379,6 +380,9 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 	// initializes save file address
 	string save_file { "save.txt" };
 
+	// maximum number of the same question allowed in retry list
+	const size_t maximum_number_of_questions { 10 };
+
 	// creates resume file if it doesn't exist
 	create_file_if(resume_file_address);
 
@@ -501,24 +505,22 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 			switch (answer[0]) {
 			case '$':
 			{
-				cout << endl;
+				cout << '\n';
 				review();
 
 				// adds the question index in the retry indexes
-				retry_indexes.push_back(indexes[i]);
-
-				//// adds the question index in the retry indexes if not present
-				//vector<size_t>::iterator it = find(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
-				//if (it == retry_indexes.end())
-				//	retry_indexes.push_back(indexes[i]);
+				size_t number_of_items = count(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
+				while(number_of_items != maximum_number_of_questions) {
+					retry_indexes.push_back(indexes[i]);
+					number_of_items = count(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
+				}
 			}
 				break;
 			case '*':
 			{
 				// removes the question index from the retry indexes if present
 				vector<size_t>::iterator it = find(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
-				if (it != retry_indexes.end())
-					retry_indexes.erase(it);
+				if (it != retry_indexes.end()) retry_indexes.erase(it);
 			}
 				break;
 			default:
@@ -560,6 +562,9 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 	// save file
 	const string save_file { "save.txt" };
 
+	// maximum number of the same question allowed in retry list
+	const size_t maximum_number_of_questions { 10 };
+
 	// question number to start with
 	size_t first_question_index { 0 };
 
@@ -588,7 +593,7 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 		cout << '\n' << answers[indexes[i]] << endl;
 
 		// checks if questions should be removed from the resume file 
-		cout << "\nRemove from Retry list ? ";
+		cout << "\nRemove from retry list ? ";
 		while(getline(cin, answer)){
 			if(answer.length() != 1) answer.clear(); // the answer is invalid
 
@@ -604,7 +609,8 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 			case '*':
 				{
 					// adds the question index in the retry indexes
-					updated_indexes.push_back(indexes[i]);
+					size_t number_of_items = count(updated_indexes.begin(), updated_indexes.end(), indexes[i]);
+					if(number_of_items < maximum_number_of_questions) updated_indexes.push_back(indexes[i]);
 				}
 				break;
 
