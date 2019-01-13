@@ -42,7 +42,7 @@ template<typename T>
 void fill_with_pattern(const T&, const size_t, const string&, ios::fmtflags, const string&);
 
 // sets up resume and save file
-void set_resume_file(const string&, const string&, const vector<size_t>&);
+void set_resume_file(const string&, const vector<size_t>&, const vector<size_t>&);
 
 // enables user to review failed question
 void review();

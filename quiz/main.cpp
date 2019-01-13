@@ -4,7 +4,6 @@
 using std::cin;
 using std::cout;
 using std::cerr;
-using std::endl;
 
 #include<stdexcept>
 using std::out_of_range;
@@ -14,22 +13,16 @@ int main()
 try
 {
 	// retrieves quiz information from files
-	string questions_answers_file_address { "questions_answers.txt" };
+	const string questions_answers_file_address { "questions_answers.txt" };
 	vector<string> questions;
 	vector<string> answers;
 	get_questions_and_answers(questions_answers_file_address, questions, answers);
 
 	// initializes resume file address
-	string resume_file_address { "resume_quiz.txt" };
+	const string resume_file_address { "resume_quiz.txt" };
 	
 	// creates resume file if it doesn't exist
 	create_file_if(resume_file_address);
-
-	// initializes save file address
-	string save_file { "save.txt" };
-
-	// creates save file if it doesn't exist
-	create_file_if(save_file);
 
 	// display main menu
 	display_main_menu(resume_file_address);
@@ -45,23 +38,23 @@ try
 		switch (choice[0]) {
 		case '1':
 			if (questions.size()) {
-				cout << endl;
+				cout << '\n';
 				list_elements(questions);
 			}
 			else
-				cout << "\nThe list is empty." << endl;
+				cout << "\nThe list is empty.\n";
 			break;
 
 		case '2':
-			cout << endl;
+			cout << '\n';
 			if (questions.size() > 0 && questions.size() == answers.size())
 				quiz_launcher(questions, answers);
 			else
-				cout << "There's not a single question to display." << endl;
+				cout << "There's not a single question to display.\n";
 			break;
 
 		case '3':
-			cout << endl;
+			cout << '\n';
 			if (are_questions_to_practice(resume_file_address)) {
 				// gets retry indexes from resume file
 				vector<size_t> indexes = get_retry_indexes(resume_file_address);
@@ -72,38 +65,38 @@ try
 				simple_quiz_launcher(questions, answers, indexes, resume_file_address);
 			}
 			else
-				cout << "Please enter a valid choice." << endl;
+				cout << "Please enter a valid choice.\n";
 			break;
 
 		case 'x':
 			break;
 
 		default:
-			cout << "\nPlease enter a valid choice." << endl;
+			cout << "\nPlease enter a valid choice.\n";
 			break;
 		}
 
 		if (choice[0] == 'x')
 			break;
 		else {
-			cout << endl;
+			cout << '\n';
 			display_main_menu(resume_file_address);
 		}
 	}
 
-	cout << "\nGoodbye !" << endl;
+	cout << "\nGoodbye !\n";
 
 	return 0;
 }
 catch (runtime_error& e) {
-	cerr << "Error: " << e.what() << endl;
+	cerr << "Error: " << e.what() << '\n';
 	return 1;
 }
 catch (out_of_range& e) {
-	cerr << "Error: " << e.what() << endl;
+	cerr << "Error: " << e.what() << '\n';
 	return 2;
 }
 catch (...) {
-	cerr << "Error: unknown exception caught." << endl;
+	cerr << "Error: unknown exception caught.\n";
 	return 3;
 }

@@ -4,15 +4,18 @@
 using std::cin;
 using std::cout;
 using std::cerr;
-using std::endl;
 using std::ws;
 using std::streamsize;
 
 #include<chrono>
 using std::chrono::system_clock;
 
+#include<random>
+using std::random_device;
+
 #include<algorithm>
 using std::count;
+using std::shuffle;
 using std::random_shuffle;
 
 #include<fstream>
@@ -52,24 +55,24 @@ void get_questions_and_answers(const string& file_address, vector<string>& quest
 		file.close();
 	}
 	else {
-		cerr << "Error: Unable to open file." << endl;
-		cout << "Creating the required file...\n" << endl;
+		cerr << "Error: Unable to open file.\n";
+		cout << "Creating the required file...\n\n";
 		ofstream file(file_address);
+		if(file.is_open()) file.close();
 	}
 }
 
 // displays main menu
 void display_main_menu(const string& resume_file_address) {
-	cout << "[1] List Questions" << endl;
-	cout << "[2] " << ((is_quiz_to_resume(resume_file_address)? "Resume Quiz" : "Complete Quiz")) << endl;
+	cout << "[1] List Questions\n";
+	cout << "[2] " << ((is_quiz_to_resume(resume_file_address)? "Resume Quiz" : "Complete Quiz")) << '\n';
 
 	// gets retry indexes from resume file
 	vector<size_t> indexes = get_retry_indexes(resume_file_address);
 
-	if(are_questions_to_practice(resume_file_address))
-		cout << "[3] Practice (" << indexes.size() << ")" << endl;
+	if(are_questions_to_practice(resume_file_address)) cout << "[3] Practice (" << indexes.size() << ")\n";
 
-	cout << "[x] Exit" << endl;
+	cout << "[x] Exit\n";
 }
 
 // lists and numbers elements of a vector
@@ -77,8 +80,7 @@ template<typename T>
 void list_elements(const vector<T>& vec)
 // lists and numbers elements of a vector vec
 {
-	for (size_t i = 0; i < vec.size(); ++i)
-		cout << i + 1 << ":" << vec[i] << endl;
+	for (size_t i = 0; i < vec.size(); ++i) cout << i + 1 << ":" << vec[i] << '\n';
 }
 
 template void list_elements<string>(const vector<string>& vec);
@@ -89,10 +91,15 @@ vector<size_t> get_random_int_distribution(const size_t& size)
 {
 	vector<size_t> indexes;
 	for (size_t i = 0; i < size; indexes.push_back(i++));
+	
+	random_device rd;
+	shuffle(indexes.begin(), indexes.end(), rd);
 
+	/*
 	unsigned seed = (unsigned) system_clock::now().time_since_epoch().count();
 	srand(seed);
 	random_shuffle(indexes.begin(), indexes.end());
+	*/
 
 	return indexes;
 }
@@ -119,12 +126,12 @@ void create_file_if(const string& file_address)
 	ifstream file;
 	file.open(file_address);
 
-	if (file.is_open())
-		file.close();
+	if (file.is_open()) file.close();
 	else {
-		cerr << "Error: Unable to open file." << endl;
-		cout << "Creating the required file...\n" << endl;
+		cerr << "Error: Unable to open file.\n";
+		cout << "Creating the required file...\n\n";
 		ofstream file(file_address);
+		if(file.is_open()) file.close();
 	}
 }
 
@@ -152,7 +159,7 @@ void write_elements(const vector<T>& vec, const string& file_name, ios_base::ope
 		file.close();
 	}
 	else
-		cerr << "Error: Unable to open file." << endl;
+		cerr << "Error: Unable to open file.\n";
 }
 
 template void write_elements<size_t>(const vector<size_t>& vec, const string& file_name, ios_base::openmode flag, const string& delimiter, const string& period);
@@ -171,7 +178,7 @@ void write_single_element(const T& t, const string& file_name, ios_base::openmod
 		file.close();
 	}
 	else
-		cerr << "Error: Unable to open file." << endl;
+		cerr << "Error: Unable to open file.\n";
 }
 
 template void write_single_element<size_t>(const size_t& t, const string& file_name, ios_base::openmode flag, const string& period);
@@ -192,21 +199,21 @@ void fill_with_pattern(const T& t, const size_t time, const string& file_name, i
 		file.close();
 	}
 	else
-		cerr << "Error: Unable to open file." << endl;
+		cerr << "Error: Unable to open file.\n";
 }
 
 template void fill_with_pattern<string>(const string& t, const size_t time, const string& file_name, ios_base::openmode flag, const string& period);
 
-// sets up resume and save file
-void set_resume_file(const string& resume_file_address, const string& save_file, const vector<size_t>& indexes) {
-	// copies the resume file
-	copy_file(resume_file_address, save_file);
-
+// sets up resume file
+void set_resume_file(const string& resume_file_address, const vector<size_t>& indexes, const vector<size_t>& retry_indexes = vector<size_t>{}) {
 	// fills the first line with whitespaces
 	fill_with_pattern(" ", 6, resume_file_address, ios::out | ios::trunc, "$\n");
 
 	// saves the question order in resume file
 	write_elements(indexes, resume_file_address, ios::app, " ", " $\n");
+
+	// saves retry indexes
+	write_elements(retry_indexes, resume_file_address, ios::app, " ", " $\n");
 }
 
 // enables user to review failed question
@@ -240,7 +247,7 @@ bool is_quiz_to_resume(const string& resume_file_address)
 		file.close();
 	}
 	else
-		cerr << "Error: Unable to open file." << endl;
+		cerr << "Error: Unable to open file.\n";
 
 	return can_be_resumed;
 }
@@ -302,7 +309,7 @@ void get_resume_information(string const& resume_file, size_t& current_question
 		file.close();
 	}
 	else
-		cerr << "Error: Unable to open file." << endl;
+		cerr << "Error: Unable to open file.\n";
 }
 
 // gets retry indexes
@@ -332,7 +339,7 @@ vector<size_t> get_retry_indexes(const string& resume_file_address)
 		file.close();
 	}
 	else
-		cerr << "Error: Unable to open file." << endl;
+		cerr << "Error: Unable to open file.\n";
 
 	return retry_indexes;
 }
@@ -375,10 +382,13 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 // (5) gives the user the choice to retry later
 {
 	// initializes resume file address
-	string resume_file_address { "resume_quiz.txt" };
+	const string resume_file_address { "resume_quiz.txt" };
 
 	// initializes save file address
-	string save_file { "save.txt" };
+	const string save_file { "save.txt" };
+
+	// exit sequence
+	const string exit_sequence { "exit" };
 
 	// maximum number of the same question allowed in retry list
 	const size_t maximum_number_of_questions { 10 };
@@ -400,25 +410,25 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 
 	// gives to the user the choice to resume previous quiz
 	if (can_be_resumed) {
-
-		cout << "Do you want to resume last quiz ? " << endl;
+		cout << "Do you want to resume last quiz ?\n";
 
 		string choice { "" };
 		while (getline(cin, choice)) {
-			if (choice.size() != 1)
-				choice = "0";
+			if (choice.size() != 1) choice = "0";
 
 			switch (choice[0]) {
 			case '$':
 				get_resume_information(resume_file_address, first_question_index, indexes, retry_indexes);
-				cout << endl;
+				cout << '\n';
 				break;
+
 			case '*':
 				indexes = get_random_int_distribution(questions.size());
-				cout << endl;
+				cout << '\n';
 				break;
+
 			default:
-				cout << "\nPlease enter a valid choice." << endl;
+				cout << "\nPlease enter a valid choice.\n";
 				continue;
 			}
 
@@ -433,22 +443,23 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 			indexes = get_random_int_distribution(questions.size());
 		else {
 			// informs the user that there are questions to practice with
-			cout << "There are questions available to practice with. Do you want to proceed? " << endl;
+			cout << "There are questions available to practice with. Do you want to proceed?\n";
 
 			string choice { "" };
 			while (getline(cin, choice)) {
-				if (choice.size() != 1)
-					choice = "0";
+				if (choice.size() != 1) choice = "0";
 
 				switch (choice[0]) {
 				case '$':
 					indexes = get_random_int_distribution(questions.size());
-					cout << endl;
+					cout << '\n';
 					break;
+
 				case '*':
 					return;
+
 				default:
-					cout << "\nPlease enter a valid choice." << endl;
+					cout << "\nPlease enter a valid choice.\n";
 					continue;
 				}
 
@@ -460,20 +471,17 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 	size_t indexes_size = indexes.size();
 
 	// sets up resume and save files
-	set_resume_file(resume_file_address, save_file, indexes);
+	set_resume_file(resume_file_address, indexes, retry_indexes);
 
 	for (size_t i = first_question_index; i < indexes_size; ++i) {
 		// displays current question number
-		cout << i + 1 << "\\" << indexes_size << endl;
+		cout << i + 1 << "\\" << indexes_size << '\n';
 
 		// adds current question_number to resume file
 		write_single_element(i + 1, resume_file_address, ios::in | ios::out, "");
 
-		// adds current question_number to save file
-		write_single_element(i + 1, save_file, ios::in | ios::out, "");
-
 		// displays current question
-		cout << questions[indexes[i]] << '\n' << endl;
+		cout << questions[indexes[i]] << '\n' << '\n';
 
 		// gets answer
 		string answer { "" };
@@ -485,15 +493,11 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 		getchar(); // deals with the newline left in cin
 
 		// exit when answer = exit
-		if (answer == "exit") {
-			// saves retry_index to resume file then exit to menu
-			write_elements(retry_indexes, resume_file_address, ios::app, " ", " $");
-			return;
-		}
+		if (answer == exit_sequence) return;
 
 		// displays current question's answer and index
 		cout << "\n[" << indexes[i] << "]\n";
-		cout << '\n' << answers[indexes[i]] << endl;
+		cout << '\n' << answers[indexes[i]] << '\n';
 
 		// asks if the user will retry the question and handles choice
 		cout << "\nRetry this question later ? ";
@@ -516,6 +520,7 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 				}
 			}
 				break;
+
 			case '*':
 			{
 				// removes the question index from the retry indexes if present
@@ -523,35 +528,34 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 				if (it != retry_indexes.end()) retry_indexes.erase(it);
 			}
 				break;
+
 			default:
-				cout << "\nPlease enter a valid choice." << endl;
+				cout << "\nPlease enter a valid choice.\n";
 				continue;
 			}
 
-			if (i != indexes_size - 1)
-				cout << endl;
+			if (i != indexes_size - 1) cout << '\n';
 
 			break;
 		}
 		// copies the resume file
 		copy_file(resume_file_address, save_file);
 
-		// saves retry_index to save file
-		write_elements(retry_indexes, save_file, ios::app, " ", " $");
+		// updates the resume file
+		copy_lines(save_file, resume_file_address, 2);
+		write_elements(retry_indexes, resume_file_address, ios::app, " ", " $");
+		remove(save_file.c_str());
 	}
 
 	// fills the first line with whitespaces
 	fill_with_pattern(" ", 6, resume_file_address, ios::in | ios::out, "");
-
-	// saves retry_index to resume file before
-	write_elements(retry_indexes, resume_file_address, ios::app, " ", " $");
 }
 
 // simple quiz launcher
 void simple_quiz_launcher(const vector<string>& questions, const vector<string>& answers, const vector<size_t>& indexes, const string& resume_file)
 // (1) displays a questions, wait for user's answer,
 // (2) displays the right answer
-// indexes provides the questions concerned and their order of display
+// indexes provides the questions and their order of display
 {
 	// makes a copy of the retry indexes
 	vector<size_t> updated_indexes { indexes };
@@ -572,10 +576,10 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 
 	for (size_t i = first_question_index; i < indexes_size; ++i) {
 		// displays current question number
-		cout << i + 1 << "\\" << indexes_size << endl;
+		cout << i + 1 << "\\" << indexes_size << '\n';
 
 		// displays current question
-		cout << questions[indexes[i]] << '\n' << endl;
+		cout << questions[indexes[i]] << '\n' << '\n';
 
 		// gets answer
 		string answer { "" };
@@ -590,7 +594,7 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 
 		// displays current question's answer and index
 		cout << "\n[" << indexes[i] << "]\n";
-		cout << '\n' << answers[indexes[i]] << endl;
+		cout << '\n' << answers[indexes[i]] << '\n';
 
 		// checks if questions should be removed from the resume file 
 		cout << "\nRemove from retry list ? ";
@@ -628,6 +632,7 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 		// updates the resume file
 		copy_lines(save_file, resume_file, 2);	
 		write_elements(updated_indexes, resume_file, ios::app, " ", " $");
+		remove(save_file.c_str());
 
 		if (i != indexes_size - 1) cout << '\n';
 	}
