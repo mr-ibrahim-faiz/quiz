@@ -618,6 +618,12 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 				}
 				break;
 
+			case '!':
+				{
+					// does nothing
+				}
+				break;
+
 			default:
 				cout << "\n\033[2mPlease enter a valid choice.\033[0m\n";
 				continue;
