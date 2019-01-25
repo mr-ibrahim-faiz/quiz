@@ -1,4 +1,5 @@
 #include "quiz.h"
+#include "properties.h"
 
 #include<iostream>
 using std::cin;
@@ -33,9 +34,58 @@ using std::numeric_limits;
 #include<algorithm>
 using std::find;
 
+// retrieves settings information from file
+vector<size_t> get_settings(const string& file_address)
+// retrieves settings information from the settings file
+// the file is created if it doesn't exist
+{
+	create_settings_file_if(file_address);
+
+	ifstream file;
+	file.open(file_address);
+
+	map<const string, Property> properties = mapping_string_property();
+
+	const size_t number_of_properties = properties.size();
+	vector<size_t> result(number_of_properties);
+
+	if(file.is_open()) {
+		string sproperty;
+
+		while(file >> sproperty) {
+			size_t value{};
+			file >> value;
+
+			if(file) {
+				Property eproperty = properties[sproperty];
+				if(properties.size() == number_of_properties) result[size_t(eproperty)] = value;
+				else 
+					properties.erase(sproperty);
+			}
+			else {
+				cerr << "Error: settings file is corrupted !\n";
+				cout << "Resetting...\n\n";
+
+				file.clear();
+				if(file.is_open()) file.close();
+
+				remove(file_address.c_str());
+				create_settings_file_if(file_address);
+
+				result.clear();
+				result = get_settings(file_address);
+			}
+		}
+	}
+	else
+		create_settings_file_if(file_address);
+
+	return result;
+}
+
 // retrieves quiz information from files
 void get_questions_and_answers(const string& file_address, vector<string>& questions, vector<string>& answers)
-// retrieves questions and answers from the questions_answers files
+// retrieves questions and answers from the questions_answers file
 // the file is created if it doesn't exist
 {
 	ifstream file;
@@ -55,8 +105,6 @@ void get_questions_and_answers(const string& file_address, vector<string>& quest
 		file.close();
 	}
 	else {
-		cerr << "Error: Unable to open file.\n";
-		cout << "Creating the required file...\n\n";
 		ofstream file(file_address);
 		if(file.is_open()) file.close();
 	}
@@ -128,10 +176,29 @@ void create_file_if(const string& file_address)
 
 	if (file.is_open()) file.close();
 	else {
-		cerr << "Error: Unable to open file.\n";
-		cout << "Creating the required file...\n\n";
 		ofstream file(file_address);
 		if(file.is_open()) file.close();
+	}
+}
+
+// creates settings file if it doesn't exist
+void create_settings_file_if(const string& file_address){
+	ifstream file;
+	file.open(file_address);
+
+	if (file.is_open()) file.close();
+	else {
+		ofstream file(file_address);
+
+		if(file.is_open()) {
+			file << "question\t0\n";
+			file << "answer_index\t0\n";
+			file << "prompt\t0\n";
+
+			file.close();
+		}
+		else 
+			cerr << "Error: Unable to open file.\n";
 	}
 }
 
@@ -374,13 +441,16 @@ void copy_lines(const string& src_filename, const string& dst_filename, const si
 }
 
 // quiz launcher
-void quiz_launcher(const vector<string>& questions, const vector<string>& answers)
+void quiz_launcher(const vector<string>& questions, const vector<string>& answers, const string& settings_file)
 // (1) checks the resume file and determines if there's a quiz to resume
 // (2) gives to the user the choice to resume quiz or not
 // (3) displays a questions, wait for user's answer,
 // (4) displays the right answer
 // (5) gives the user the choice to retry later
-{
+{	
+	// retrieves settings information from file
+	vector<size_t> settings = get_settings(settings_file);
+
 	// initializes resume file address
 	const string resume_file_address { "resume_quiz.txt" };
 
@@ -410,7 +480,7 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 
 	// gives to the user the choice to resume previous quiz
 	if (can_be_resumed) {
-		cout << "\033[2mDo you want to resume last quiz ?\033[0m\n";
+		cout << "\033[" << settings[size_t(Property::prompt)] << "mDo you want to resume last quiz ?\033[0m\n";
 
 		string choice { "" };
 		while (getline(cin, choice)) {
@@ -428,7 +498,7 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 				break;
 
 			default:
-				cout << "\n\033[2mPlease enter a valid choice.\033[0m\n";
+				cout << "\n\033[" << settings[size_t(Property::prompt)] << "mPlease enter a valid choice.\033[0m\n";
 				continue;
 			}
 
@@ -443,7 +513,7 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 			indexes = get_random_int_distribution(questions.size());
 		else {
 			// informs the user that there are questions to practice with
-			cout << "\033[2mThere are questions available to practice with. Do you want to proceed?\033[0m\n";
+			cout << "\033[" << settings[size_t(Property::prompt)] << "mThere are questions available to practice with. Do you want to proceed?\033[0m\n";
 
 			string choice { "" };
 			while (getline(cin, choice)) {
@@ -459,7 +529,7 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 					return;
 
 				default:
-					cout << "\n\033[2mPlease enter a valid choice.\033[0m\n";
+					cout << "\n\033[" << settings[size_t(Property::prompt)] << "mPlease enter a valid choice.\033[0m\n";
 					continue;
 				}
 
@@ -481,7 +551,7 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 		write_single_element(i + 1, resume_file_address, ios::in | ios::out, "");
 
 		// displays current question
-		cout << "\033[31m" << questions[indexes[i]] << "\033[0m\n\n";
+		cout << "\033[" << settings[size_t(Property::question)] << "m" << questions[indexes[i]] << "\033[0m\n\n";
 
 		// gets answer
 		string answer { "" };
@@ -496,11 +566,11 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 		if (answer == exit_sequence) return;
 
 		// displays current question's answer and index
-		cout << "\n[\033[32m" << indexes[i] << "\033[0m]\n";
+		cout << "\n[\033[" << settings[size_t(Property::answer_index)] << "m" << indexes[i] << "\033[0m]\n";
 		cout << '\n' << answers[indexes[i]] << '\n';
 
 		// asks if the user will retry the question and handles choice
-		cout << "\n\033[2mRetry this question later ? \033[0m";
+		cout << "\n\033[" << settings[size_t(Property::prompt)] << "mRetry this question later ? \033[0m";
 
 		while (getline(cin, answer)) {
 			if (answer.size() != 1)
@@ -530,7 +600,7 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 				break;
 
 			default:
-				cout << "\n\033[2mPlease enter a valid choice.\033[0m\n";
+				cout << "\n\033[" << settings[size_t(Property::prompt)] << "mPlease enter a valid choice.\033[0m\n";
 				continue;
 			}
 
@@ -552,11 +622,14 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 }
 
 // simple quiz launcher
-void simple_quiz_launcher(const vector<string>& questions, const vector<string>& answers, const vector<size_t>& indexes, const string& resume_file)
+void simple_quiz_launcher(const vector<string>& questions, const vector<string>& answers, const vector<size_t>& indexes, const string& resume_file, const string& settings_file)
 // (1) displays a questions, wait for user's answer,
 // (2) displays the right answer
 // indexes provides the questions and their order of display
 {
+	// retrieves settings information from file
+	vector<size_t> settings = get_settings(settings_file);
+
 	// makes a copy of the retry indexes
 	vector<size_t> updated_indexes { indexes };
 
@@ -579,7 +652,7 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 		cout << i + 1 << "\\" << indexes_size << '\n';
 
 		// displays current question
-		cout << "\033[31m" << questions[indexes[i]] << "\033[0m\n\n";
+		cout << "\033[" << settings[size_t(Property::question)] << "m" << questions[indexes[i]] << "\033[0m\n\n";
 
 		// gets answer
 		string answer { "" };
@@ -593,11 +666,11 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 		if(answer == exit_sequence) return;
 
 		// displays current question's answer and index
-		cout << "\n[\033[32m" << indexes[i] << "\033[0m]\n";
+		cout << "\n[\033[" << settings[size_t(Property::answer_index)] << "m" << indexes[i] << "\033[0m]\n";
 		cout << '\n' << answers[indexes[i]] << '\n';
 
 		// checks if questions should be removed from the resume file 
-		cout << "\033[2m\nRemove from retry list ? \033[0m";
+		cout << "\033[" << settings[size_t(Property::prompt)] << "m\nRemove from retry list ? \033[0m";
 		while(getline(cin, answer)){
 			if(answer.length() != 1) answer.clear(); // the answer is invalid
 
@@ -625,7 +698,7 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 				break;
 
 			default:
-				cout << "\n\033[2mPlease enter a valid choice.\033[0m\n";
+				cout << "\n\033[" << settings[size_t(Property::prompt)] << "mPlease enter a valid choice.\033[0m\n";
 				continue;
 			}
 

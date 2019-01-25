@@ -10,6 +10,9 @@ using std::vector;
 #include<string>
 using std::string;
 
+// retrieves settings information from file
+vector<size_t> get_settings(const string&);
+
 // retrieves quiz information from files
 void get_questions_and_answers(const string&, vector<string>&, vector<string>&);
 
@@ -28,6 +31,9 @@ void copy_file(const string&, const string&);
 
 // creates file if it doesn't exit
 void create_file_if(const string&);
+
+// creates settings file if it doesn't exist
+void create_settings_file_if(const string&);
 
 // writes elements of a vector on file
 template<typename T>
@@ -67,7 +73,7 @@ void shuffle_vector(vector<T>&);
 void copy_lines(const string&, const string&, const size_t&, ios_base::openmode);
 
 // quiz launcher
-void quiz_launcher(const vector<string>&, const vector<string>&);
+void quiz_launcher(const vector<string>&, const vector<string>&, const string&);
 
 // simple quiz launcher
-void simple_quiz_launcher(const vector<string>&, const vector<string>&, const vector<size_t>&, const string&);
+void simple_quiz_launcher(const vector<string>&, const vector<string>&, const vector<size_t>&, const string&, const string&);

@@ -24,6 +24,12 @@ try
 	// creates resume file if it doesn't exist
 	create_file_if(resume_file_address);
 
+	// initializes settings file address
+	const string settings_file_address { "settings.txt" };
+
+	// create setting file if it doesn't exist
+	create_settings_file_if(settings_file_address);
+
 	// display main menu
 	display_main_menu(resume_file_address);
 
@@ -48,7 +54,7 @@ try
 		case '2':
 			cout << '\n';
 			if (questions.size() > 0 && questions.size() == answers.size())
-				quiz_launcher(questions, answers);
+				quiz_launcher(questions, answers, settings_file_address);
 			else
 				cout << "There's not a single question to display.\n";
 			break;
@@ -62,7 +68,7 @@ try
 				// shuffle indexes
 				shuffle_vector(indexes);
 
-				simple_quiz_launcher(questions, answers, indexes, resume_file_address);
+				simple_quiz_launcher(questions, answers, indexes, resume_file_address, settings_file_address);
 			}
 			else
 				cout << "Please enter a valid choice.\n";
