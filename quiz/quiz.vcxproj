@@ -20,9 +20,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="properties.cpp" />
     <ClCompile Include="quiz.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="properties.h" />
     <ClInclude Include="quiz.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
