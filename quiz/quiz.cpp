@@ -17,7 +17,6 @@ using std::random_device;
 #include<algorithm>
 using std::count;
 using std::shuffle;
-using std::random_shuffle;
 
 #include<fstream>
 using std::fstream;
@@ -104,9 +103,8 @@ void get_questions_and_answers(const string& file_address, vector<string>& quest
 		}
 		file.close();
 	}
-	else {
-		ofstream file(file_address);
-		if(file.is_open()) file.close();
+	else { 
+		create_file_if(file_address);
 	}
 }
 
@@ -171,24 +169,24 @@ void copy_file(const string& src_filename, const string& dst_filename)
 void create_file_if(const string& file_address)
 // create the file if it doesn't exit
 {
-	ifstream file;
-	file.open(file_address);
+	fstream file;
+	file.open(file_address, ios::in);
 
 	if (file.is_open()) file.close();
 	else {
-		ofstream file(file_address);
+		file.open(file_address, ios::out);
 		if(file.is_open()) file.close();
 	}
 }
 
 // creates settings file if it doesn't exist
 void create_settings_file_if(const string& file_address){
-	ifstream file;
-	file.open(file_address);
+	fstream file;
+	file.open(file_address, ios::in);
 
 	if (file.is_open()) file.close();
 	else {
-		ofstream file(file_address);
+		file.open(file_address, ios::out);
 
 		if(file.is_open()) {
 			file << "question\t0\n";
@@ -414,20 +412,19 @@ vector<size_t> get_retry_indexes(const string& resume_file_address)
 // shuffles vector
 template<typename T>
 void shuffle_vector(vector<T>& vec) {
-	unsigned seed = (unsigned)system_clock::now().time_since_epoch().count();
-	srand(seed);
-	random_shuffle(vec.begin(), vec.end());
+	random_device rd;
+	shuffle(vec.begin(), vec.end(), rd);
 }
 
 template void shuffle_vector<size_t>(vector<size_t>& vec);
 
 // copies line from a file to another
-void copy_lines(const string& src_filename, const string& dst_filename, const size_t& n, ios_base::openmode mode = ios::out)
+void copy_lines(const string& src_filename, const string& dst_filename, const size_t& n, ios_base::openmode mode = ios::out | ios::binary)
 // copies the first n lines from src_filename into dst_filename
 {
 	fstream src(src_filename, ios::in | ios::binary);
 	if(src.is_open()){
-		fstream dst(dst_filename, ios::out | ios::binary);
+		fstream dst(dst_filename, mode);
 		if(dst.is_open()){
 			for(size_t i = 0; i < n; ++i){
 				string sinput;
@@ -583,10 +580,10 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 				review();
 
 				// adds the question index in the retry indexes
-				size_t number_of_items = count(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
+				size_t number_of_items = (size_t) count(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
 				while(number_of_items != maximum_number_of_questions) {
 					retry_indexes.push_back(indexes[i]);
-					number_of_items = count(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
+					number_of_items = (size_t) count(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
 				}
 			}
 				break;
@@ -686,7 +683,7 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 			case '*':
 				{
 					// adds the question index in the retry indexes
-					size_t number_of_items = count(updated_indexes.begin(), updated_indexes.end(), indexes[i]);
+					size_t number_of_items = (size_t) count(updated_indexes.begin(), updated_indexes.end(), indexes[i]);
 					if(number_of_items < maximum_number_of_questions) updated_indexes.push_back(indexes[i]);
 				}
 				break;
