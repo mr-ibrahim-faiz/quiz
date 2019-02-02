@@ -33,6 +33,13 @@ using std::numeric_limits;
 #include<algorithm>
 using std::find;
 
+// constant expressions
+constexpr char newline { '\n' };
+constexpr char yes { '$' };
+constexpr char no { '*' };
+constexpr char alternative_no { '!' };
+constexpr char file_line_delimiter { '$' };
+
 // retrieves settings information from file
 vector<size_t> get_settings(const string& file_address)
 // retrieves settings information from the settings file
@@ -92,12 +99,10 @@ void get_questions_and_answers(const string& file_address, vector<string>& quest
 	file.open(file_address);
 	if (file.is_open()) {
 
-		string line { "" };
-
-		while (getline(file, line, '$')) {
+		for (string line; getline(file, line, file_line_delimiter);) {
 			questions.push_back(line);
-			file.ignore(1, '\n');
-			getline(file, line, '$');
+			file.ignore(1, newline);
+			getline(file, line, file_line_delimiter);
 			answers.push_back(line);
 			file >> ws;
 		}
@@ -140,12 +145,6 @@ vector<size_t> get_random_int_distribution(const size_t& size)
 	
 	random_device rd;
 	shuffle(indexes.begin(), indexes.end(), rd);
-
-	/*
-	unsigned seed = (unsigned) system_clock::now().time_since_epoch().count();
-	srand(seed);
-	random_shuffle(indexes.begin(), indexes.end());
-	*/
 
 	return indexes;
 }
@@ -281,16 +280,16 @@ void set_resume_file(const string& resume_file_address, const vector<size_t>& in
 	write_elements(retry_indexes, resume_file_address, ios::app, " ", " $\n");
 }
 
-// enables user to review failed question
-void review() {
-	string review { "" };
-	getline(cin, review, '$');
-
-	while (cin.peek() != '\n')
-		getline(cin, review, '$');
-
+// gets user's answer
+string get_answer() {
+	string answer;
+	for (; getline(cin, answer, file_line_delimiter);) {
+		if (cin.peek() == newline) break;
+	}
 	getchar(); // deals with the newline
+	return answer;
 }
+
 
 // checks if there's a quiz to resume
 bool is_quiz_to_resume(const string& resume_file_address)
@@ -354,7 +353,7 @@ void get_resume_information(string const& resume_file, size_t& current_question
 			--current_question;
 		else
 			file.clear();
-		file.ignore(numeric_limits<streamsize>::max(), '\n');
+		file.ignore(numeric_limits<streamsize>::max(), newline);
 
 		// retrieves questions order index
 		size_t index { 0 };
@@ -362,14 +361,14 @@ void get_resume_information(string const& resume_file, size_t& current_question
 			indexes.push_back(index);
 
 		file.clear();
-		file.ignore(numeric_limits<streamsize>::max(), '\n');
+		file.ignore(numeric_limits<streamsize>::max(), newline);
 
 		// retrieves retry indexes
 		while (file >> index)
 			retry_indexes.push_back(index);
 
 		file.clear();
-		file.ignore(numeric_limits<streamsize>::max(), '\n');
+		file.ignore(numeric_limits<streamsize>::max(), newline);
 
 		file.close();
 	}
@@ -388,10 +387,10 @@ vector<size_t> get_retry_indexes(const string& resume_file_address)
 
 	if (file.is_open()) {
 		// ignores current question
-		file.ignore(numeric_limits<streamsize>::max(), '\n');
+		file.ignore(numeric_limits<streamsize>::max(), newline);
 
 		// ignores questions order index
-		file.ignore(numeric_limits<streamsize>::max(), '\n');
+		file.ignore(numeric_limits<streamsize>::max(), newline);
 
 		// retrieves retry indexes
 		size_t index { 0 };
@@ -399,7 +398,7 @@ vector<size_t> get_retry_indexes(const string& resume_file_address)
 			retry_indexes.push_back(index);
 
 		file.clear();
-		file.ignore(numeric_limits<streamsize>::max(), '\n');
+		file.ignore(numeric_limits<streamsize>::max(), newline);
 
 		file.close();
 	}
@@ -429,7 +428,7 @@ void copy_lines(const string& src_filename, const string& dst_filename, const si
 			for(size_t i = 0; i < n; ++i){
 				string sinput;
 				getline(src, sinput);
-				dst << sinput << '\n';
+				dst << sinput << newline;
 			}
 			dst.close();
 		}
@@ -484,12 +483,12 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 			if (choice.size() != 1) choice = "0";
 
 			switch (choice[0]) {
-			case '$':
+			case yes:
 				get_resume_information(resume_file_address, first_question_index, indexes, retry_indexes);
 				cout << '\n';
 				break;
 
-			case '*':
+			case no:
 				indexes = get_random_int_distribution(questions.size());
 				cout << '\n';
 				break;
@@ -512,17 +511,16 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 			// informs the user that there are questions to practice with
 			cout << "\033[" << settings[size_t(Property::prompt)] << "mThere are questions available to practice with. Do you want to proceed?\033[0m\n";
 
-			string choice { "" };
-			while (getline(cin, choice)) {
+			for (string choice; getline(cin, choice);) {
 				if (choice.size() != 1) choice = "0";
 
 				switch (choice[0]) {
-				case '$':
+				case yes:
 					indexes = get_random_int_distribution(questions.size());
 					cout << '\n';
 					break;
 
-				case '*':
+				case no:
 					return;
 
 				default:
@@ -550,14 +548,8 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 		// displays current question
 		cout << "\033[" << settings[size_t(Property::question)] << "m" << questions[indexes[i]] << "\033[0m\n\n";
 
-		// gets answer
-		string answer { "" };
-		getline(cin, answer, '$');
-
-		while(cin.peek() != '\n')
-			getline(cin, answer, '$');
-
-		getchar(); // deals with the newline left in cin
+		// gets user's answer
+		string answer = get_answer();
 
 		// exit when answer = exit
 		if (answer == exit_sequence) return;
@@ -569,15 +561,14 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 		// asks if the user will retry the question and handles choice
 		cout << "\n\033[" << settings[size_t(Property::prompt)] << "mRetry this question later ? \033[0m";
 
-		while (getline(cin, answer)) {
-			if (answer.size() != 1)
-				answer = "0";
+		for (string choice; getline(cin, choice);) {
+			if (choice.length() != 1) choice.clear(); // the answer is invalid
 
-			switch (answer[0]) {
-			case '$':
+			switch (choice[0]) {
+			case yes:
 			{
 				cout << '\n';
-				review();
+				get_answer(); // enables user to review failed question
 
 				// adds the question index in the retry indexes
 				size_t number_of_items = (size_t) count(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
@@ -588,7 +579,7 @@ void quiz_launcher(const vector<string>& questions, const vector<string>& answer
 			}
 				break;
 
-			case '*':
+			case no:
 			{
 				// removes the question index from the retry indexes if present
 				vector<size_t>::iterator it = find(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
@@ -651,13 +642,8 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 		// displays current question
 		cout << "\033[" << settings[size_t(Property::question)] << "m" << questions[indexes[i]] << "\033[0m\n\n";
 
-		// gets answer
-		string answer { "" };
-		getline(cin, answer, '$');
-
-		while (cin.peek() != '\n') getline(cin, answer, '$');
-
-		getchar(); // deals with the newline left in cin
+		// gets user's answer
+		string answer = get_answer();
 
 		// checks if the user wants to exit
 		if(answer == exit_sequence) return;
@@ -668,11 +654,12 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 
 		// checks if questions should be removed from the resume file 
 		cout << "\033[" << settings[size_t(Property::prompt)] << "m\nRemove from retry list ? \033[0m";
-		while(getline(cin, answer)){
-			if(answer.length() != 1) answer.clear(); // the answer is invalid
 
-			switch(answer[0]){
-			case '$':
+		for (string choice; getline(cin, choice);) {
+			if(choice.length() != 1) choice.clear(); // the answer is invalid
+
+			switch(choice[0]){
+			case yes:
 				{
 					// removes the question index from the retry indexes if present
 					vector<size_t>::iterator it = find(updated_indexes.begin(), updated_indexes.end(), indexes[i]);
@@ -680,7 +667,7 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 				}
 				break;
 
-			case '*':
+			case no:
 				{
 					// adds the question index in the retry indexes
 					size_t number_of_items = (size_t) count(updated_indexes.begin(), updated_indexes.end(), indexes[i]);
@@ -688,7 +675,7 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 				}
 				break;
 
-			case '!':
+			case alternative_no:
 				{
 					// does nothing
 				}

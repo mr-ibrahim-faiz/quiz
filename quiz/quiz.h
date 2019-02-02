@@ -50,8 +50,8 @@ void fill_with_pattern(const T&, const size_t, const string&, ios::fmtflags, con
 // sets up resume and save file
 void set_resume_file(const string&, const vector<size_t>&, const vector<size_t>&);
 
-// enables user to review failed question
-void review();
+// gets user's answer
+string get_answer();
 
 // checks if there's a quiz to resume
 bool is_quiz_to_resume(const string&);
