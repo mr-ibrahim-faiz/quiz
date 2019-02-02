@@ -13,25 +13,18 @@ int main()
 try
 {
 	// retrieves quiz information from files
-	const string questions_answers_file_address { "questions_answers.txt" };
 	vector<string> questions;
 	vector<string> answers;
-	get_questions_and_answers(questions_answers_file_address, questions, answers);
-
-	// initializes resume file address
-	const string resume_file_address { "resume_quiz.txt" };
+	get_questions_and_answers(questions_answers_file, questions, answers);
 	
 	// creates resume file if it doesn't exist
-	create_file_if(resume_file_address);
-
-	// initializes settings file address
-	const string settings_file_address { "settings.txt" };
+	create_file_if(resume_file);
 
 	// create setting file if it doesn't exist
-	create_settings_file_if(settings_file_address);
+	create_settings_file_if(settings_file);
 
 	// display main menu
-	display_main_menu(resume_file_address);
+	display_main_menu(resume_file);
 
 	// gets user's choice
 	string choice { "" };
@@ -54,21 +47,21 @@ try
 		case '2':
 			cout << '\n';
 			if (questions.size() > 0 && questions.size() == answers.size())
-				quiz_launcher(questions, answers, settings_file_address);
+				quiz_launcher(questions, answers, settings_file);
 			else
 				cout << "There's not a single question to display.\n";
 			break;
 
 		case '3':
 			cout << '\n';
-			if (are_questions_to_practice(resume_file_address)) {
+			if (are_questions_to_practice(resume_file)) {
 				// gets retry indexes from resume file
-				vector<size_t> indexes = get_retry_indexes(resume_file_address);
+				vector<size_t> indexes = get_retry_indexes(resume_file);
 
 				// shuffle indexes
 				shuffle_vector(indexes);
 
-				simple_quiz_launcher(questions, answers, indexes, resume_file_address, settings_file_address);
+				simple_quiz_launcher(questions, answers, indexes, resume_file, settings_file);
 			}
 			else
 				cout << "Please enter a valid choice.\n";
@@ -86,7 +79,7 @@ try
 			break;
 		else {
 			cout << '\n';
-			display_main_menu(resume_file_address);
+			display_main_menu(resume_file);
 		}
 	}
 

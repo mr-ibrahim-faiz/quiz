@@ -33,13 +33,6 @@ using std::numeric_limits;
 #include<algorithm>
 using std::find;
 
-// constant expressions
-constexpr char newline { '\n' };
-constexpr char yes { '$' };
-constexpr char no { '*' };
-constexpr char alternative_no { '!' };
-constexpr char file_line_delimiter { '$' };
-
 // retrieves settings information from file
 vector<size_t> get_settings(const string& file_address)
 // retrieves settings information from the settings file

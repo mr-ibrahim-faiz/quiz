@@ -10,6 +10,18 @@ using std::vector;
 #include<string>
 using std::string;
 
+// constant expressions
+constexpr char newline { '\n' };
+constexpr char yes { '$' };
+constexpr char no { '*' };
+constexpr char alternative_no { '!' };
+constexpr char file_line_delimiter { '$' };
+
+// file names
+const string questions_answers_file { "questions_answers.txt" };
+const string resume_file { "resume_quiz.txt" };
+const string settings_file { "settings.txt" };
+
 // retrieves settings information from file
 vector<size_t> get_settings(const string&);
 
