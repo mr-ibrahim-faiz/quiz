@@ -1,7 +1,6 @@
 #pragma once
 
 #include<iostream>
-using std::ios;
 using std::ios_base;
 
 #include<vector>
@@ -10,26 +9,77 @@ using std::vector;
 #include<string>
 using std::string;
 
-// constant expressions
+#include<limits>
+using std::numeric_limits;
+
+// symbolic names
 constexpr char newline { '\n' };
 constexpr char yes { '$' };
 constexpr char no { '*' };
 constexpr char alternative_no { '!' };
 constexpr char file_line_delimiter { '$' };
+constexpr char exit_character { 'x' };
+
+const string exit_sequence { "exit" };
+
+// maximum number of the same question allowed in retry list
+const size_t maximum_number_of_questions { 10 };
+constexpr size_t INVALID_POSITION = 0;
 
 // file names
 const string questions_answers_file { "questions_answers.txt" };
 const string resume_file { "resume_quiz.txt" };
 const string settings_file { "settings.txt" };
+const string save_file { "save.txt" };
+
+// user-defined type Quiz
+struct Quiz {
+	// default constructor
+	Quiz() noexcept
+		: questions{}
+		, answers{}{}
+
+	// questions and answers
+	vector<string> questions;
+	vector<string> answers;
+
+	// Modes
+	enum class Mode {
+		practice, normal, resume
+	};
+};
+
+// user-defined type Resume
+struct Resume {
+	// default constructor
+	Resume() noexcept
+		: position{}
+		, indexes{}
+		, retry_indexes{}{}
+	
+	// constructor taking position, indexes and retry_indexes as arguments
+	explicit Resume(const size_t& position, const vector<size_t>& indexes, const vector<size_t>& retry_indexes) noexcept
+		: position { position }
+		, indexes { indexes }
+		, retry_indexes { retry_indexes }{}
+
+	// resume information
+	size_t position; // position of the current question (equals question_index + 1)
+	vector<size_t> indexes; // order of the questions
+	vector<size_t> retry_indexes; // questions to retry
+};
 
 // retrieves settings information from file
-vector<size_t> get_settings(const string&);
+vector<size_t> get_settings();
 
 // retrieves quiz information from files
-void get_questions_and_answers(const string&, vector<string>&, vector<string>&);
+Quiz get_questions_and_answers();
+
+// gets resume file information
+Resume get_resume_information();
 
 // displays main menu
-void display_main_menu(const string&);
+void display_main_menu();
 
 // lists and numbers elements of a vector
 template<typename T>
@@ -38,54 +88,35 @@ void list_elements(const vector<T>&);
 // gets a random distribution of unique unsigned integers
 vector<size_t> get_random_int_distribution(const size_t&);
 
-// copies a file
-void copy_file(const string&, const string&);
-
 // creates file if it doesn't exit
 void create_file_if(const string&);
 
 // creates settings file if it doesn't exist
-void create_settings_file_if(const string&);
+void create_settings_file_if();
 
-// writes elements of a vector on file
+// writes elements of a vector on a file
 template<typename T>
-void write_elements(const vector<T>&, const string&, ios::fmtflags, const string&, const string&);
+void write_elements(const vector<T>&, const string&, ios_base::openmode, const string&, const string&);
 
 // writes a single element on a file
 template<typename T>
-void write_single_element(const T&, const string&, ios::fmtflags, const string&);
+void write_single_element(const T&, const string&, ios_base::openmode, const string&);
 
-// fills a file with a given pattern
-template<typename T>
-void fill_with_pattern(const T&, const size_t, const string&, ios::fmtflags, const string&);
-
-// sets up resume and save file
-void set_resume_file(const string&, const vector<size_t>&, const vector<size_t>&);
+// sets up resume file
+void update_resume_file(const Resume&);
 
 // gets user's answer
 string get_answer();
-
-// checks if there's a quiz to resume
-bool is_quiz_to_resume(const string&);
-
-// checks if there are questions to practice with
-bool are_questions_to_practice(const string&);
-
-// gets resume file information
-void get_resume_information(string const&, size_t&, vector<size_t>&, vector<size_t>&);
-
-// gets retry indexes
-vector<size_t> get_retry_indexes(const string&);
 
 // shuffles vector
 template<typename T>
 void shuffle_vector(vector<T>&);
 
-// copies line from a file to another
-void copy_lines(const string&, const string&, const size_t&, ios_base::openmode);
+// gets position 
+size_t get_position(const Resume&, const Quiz::Mode&);
 
-// quiz launcher
-void quiz_launcher(const vector<string>&, const vector<string>&, const string&);
+// gets indexes 
+vector<size_t> get_indexes(const Quiz&, const Resume&, const Quiz::Mode&);
 
 // simple quiz launcher
-void simple_quiz_launcher(const vector<string>&, const vector<string>&, const vector<size_t>&, const string&, const string&);
+void quiz_launcher(const Quiz&, const Resume&, const Quiz::Mode&);

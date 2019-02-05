@@ -12,27 +12,36 @@ using std::runtime_error;
 int main()
 try
 {
-	// retrieves quiz information from files
-	vector<string> questions;
-	vector<string> answers;
-	get_questions_and_answers(questions_answers_file, questions, answers);
-	
-	// creates resume file if it doesn't exist
+	// creates required files
+	create_file_if(questions_answers_file);
 	create_file_if(resume_file);
+	create_settings_file_if();
 
-	// create setting file if it doesn't exist
-	create_settings_file_if(settings_file);
+	// retrieves quiz information from file
+	Quiz quiz = get_questions_and_answers();
+	const vector<string>& questions = quiz.questions;
+	const vector<string>& answers = quiz.answers;
+
+	// retrieves resume information from file
+	Resume resume = get_resume_information();
+	const vector<size_t>& retry_indexes = resume.retry_indexes;
+	
+	// updates resume file
+	update_resume_file(resume);
 
 	// display main menu
-	display_main_menu(resume_file);
+	display_main_menu();
 
 	// gets user's choice
-	string choice { "" };
-	while (true) {
-		getline(cin, choice);
+	for(string choice; getline(cin, choice);){
+		if (choice.length() != 1) choice = "0";
+		else {
+			// retrieves quiz information from file
+			quiz = get_questions_and_answers();
 
-		if (choice.size() != 1)
-			choice = "0";
+			// retrieves resume information from file
+			resume = get_resume_information();
+		}
 
 		switch (choice[0]) {
 		case '1':
@@ -46,28 +55,26 @@ try
 
 		case '2':
 			cout << '\n';
-			if (questions.size() > 0 && questions.size() == answers.size())
-				quiz_launcher(questions, answers, settings_file);
-			else
-				cout << "There's not a single question to display.\n";
+			if (!questions.empty() && questions.size() == answers.size()) {
+				if(resume.position == INVALID_POSITION) quiz_launcher(quiz, resume, Quiz::Mode::normal);
+				else quiz_launcher(quiz, resume, Quiz::Mode::resume);
+			}
+			else {
+				if(questions.empty()) cout << "There's not a single question to display.\n";
+				else cout << "The number of questions doesn't match the number of answers.\n";
+			}	
 			break;
 
 		case '3':
 			cout << '\n';
-			if (are_questions_to_practice(resume_file)) {
-				// gets retry indexes from resume file
-				vector<size_t> indexes = get_retry_indexes(resume_file);
-
-				// shuffle indexes
-				shuffle_vector(indexes);
-
-				simple_quiz_launcher(questions, answers, indexes, resume_file, settings_file);
+			if (!retry_indexes.empty()) {
+				quiz_launcher(quiz, resume, Quiz::Mode::practice);
 			}
 			else
 				cout << "Please enter a valid choice.\n";
 			break;
 
-		case 'x':
+		case exit_character:
 			break;
 
 		default:
@@ -75,11 +82,11 @@ try
 			break;
 		}
 
-		if (choice[0] == 'x')
+		if (choice[0] == exit_character)
 			break;
 		else {
 			cout << '\n';
-			display_main_menu(resume_file);
+			display_main_menu();
 		}
 	}
 

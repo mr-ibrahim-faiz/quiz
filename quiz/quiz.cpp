@@ -24,24 +24,18 @@ using std::ifstream;
 using std::ofstream;
 using std::ios_base;
 
-#include<stdexcept>
-using std::out_of_range;
-
-#include<limits>
-using std::numeric_limits;
-
 #include<algorithm>
 using std::find;
 
 // retrieves settings information from file
-vector<size_t> get_settings(const string& file_address)
+vector<size_t> get_settings()
 // retrieves settings information from the settings file
 // the file is created if it doesn't exist
 {
-	create_settings_file_if(file_address);
+	create_settings_file_if();
 
 	ifstream file;
-	file.open(file_address);
+	file.open(settings_file);
 
 	map<const string, Property> properties = mapping_string_property();
 
@@ -68,28 +62,33 @@ vector<size_t> get_settings(const string& file_address)
 				file.clear();
 				if(file.is_open()) file.close();
 
-				remove(file_address.c_str());
-				create_settings_file_if(file_address);
+				remove(settings_file.c_str());
+				create_settings_file_if();
 
 				result.clear();
-				result = get_settings(file_address);
+				result = get_settings();
 			}
 		}
 	}
 	else
-		create_settings_file_if(file_address);
+		cerr << "Error: Unable to open file.\n";
 
 	return result;
 }
 
 // retrieves quiz information from files
-void get_questions_and_answers(const string& file_address, vector<string>& questions, vector<string>& answers)
+Quiz get_questions_and_answers()
 // retrieves questions and answers from the questions_answers file
 // the file is created if it doesn't exist
 {
+	Quiz quiz;
+
+	vector<string>& questions = quiz.questions;
+	vector<string>& answers = quiz.answers;
+
 	ifstream file;
 
-	file.open(file_address);
+	file.open(questions_answers_file);
 	if (file.is_open()) {
 
 		for (string line; getline(file, line, file_line_delimiter);) {
@@ -102,20 +101,65 @@ void get_questions_and_answers(const string& file_address, vector<string>& quest
 		file.close();
 	}
 	else { 
-		create_file_if(file_address);
+		create_file_if(questions_answers_file);
 	}
+
+	return quiz;
+}
+
+// gets resume file information
+Resume get_resume_information()
+// retrieves current question, questions order index and retry indexes from resume file
+{
+	Resume resume;
+	size_t& position = resume.position;
+	vector<size_t>& indexes = resume.indexes;
+	vector<size_t>& retry_indexes = resume.retry_indexes;
+
+	ifstream file;
+	file.open(resume_file);
+
+	if (file.is_open()) {
+		// retrieves current question
+		if (file >> position && position != 0) --position;
+		else position = 0;
+
+		file.clear();
+		file.ignore(numeric_limits<streamsize>::max(), newline);
+
+		// retrieves questions order index
+		size_t index{ 0 };
+		while (file >> index)
+			indexes.push_back(index);
+
+		file.clear();
+		file.ignore(numeric_limits<streamsize>::max(), newline);
+
+		// retrieves retry indexes
+		while (file >> index)
+			retry_indexes.push_back(index);
+
+		file.clear();
+		file.ignore(numeric_limits<streamsize>::max(), newline);
+
+		file.close();
+	}
+	else
+		cerr << "Error: Unable to open file.\n";
+
+	return resume;
 }
 
 // displays main menu
-void display_main_menu(const string& resume_file_address) {
+void display_main_menu() {
+	// retrieves resume information from file
+	Resume resume = get_resume_information();
+	const size_t indexes_size = resume.retry_indexes.size();
+	const size_t& position = resume.position;
+
 	cout << "[1] List Questions\n";
-	cout << "[2] " << ((is_quiz_to_resume(resume_file_address)? "Resume Quiz" : "Complete Quiz")) << '\n';
-
-	// gets retry indexes from resume file
-	vector<size_t> indexes = get_retry_indexes(resume_file_address);
-
-	if(are_questions_to_practice(resume_file_address)) cout << "[3] Practice (" << indexes.size() << ")\n";
-
+	cout << "[2] " << (position != INVALID_POSITION ? "Resume Quiz" : "Complete Quiz") << '\n';
+	if(indexes_size) cout << "[3] Practice (" << indexes_size << ")\n";
 	cout << "[x] Exit\n";
 }
 
@@ -135,26 +179,10 @@ vector<size_t> get_random_int_distribution(const size_t& size)
 {
 	vector<size_t> indexes;
 	for (size_t i = 0; i < size; indexes.push_back(i++));
-	
-	random_device rd;
-	shuffle(indexes.begin(), indexes.end(), rd);
+
+	shuffle_vector(indexes);
 
 	return indexes;
-}
-
-// copies a file
-void copy_file(const string& src_filename, const string& dst_filename)
-// copies the source file src_filename into a destination file dst_filename
-{
-	ifstream src(src_filename, ios::binary);
-	if (src.is_open()) {
-		ofstream dst(dst_filename, ios::binary);
-		if (dst.is_open()) {
-			dst << src.rdbuf();
-			dst.close();
-		}
-		src.close();
-	}
 }
 
 // creates file if it doesn't exit
@@ -162,23 +190,23 @@ void create_file_if(const string& file_address)
 // create the file if it doesn't exit
 {
 	fstream file;
-	file.open(file_address, ios::in);
+	file.open(file_address, ios_base::in);
 
 	if (file.is_open()) file.close();
 	else {
-		file.open(file_address, ios::out);
+		file.open(file_address, ios_base::out);
 		if(file.is_open()) file.close();
 	}
 }
 
 // creates settings file if it doesn't exist
-void create_settings_file_if(const string& file_address){
+void create_settings_file_if(){
 	fstream file;
-	file.open(file_address, ios::in);
+	file.open(settings_file, ios_base::in);
 
 	if (file.is_open()) file.close();
 	else {
-		file.open(file_address, ios::out);
+		file.open(settings_file, ios_base::out);
 
 		if(file.is_open()) {
 			file << "question\t0\n";
@@ -192,19 +220,18 @@ void create_settings_file_if(const string& file_address){
 	}
 }
 
-// writes elements of a vector on file
+// writes elements of a vector on a file
 template<typename T>
-void write_elements(const vector<T>& vec, const string& file_name, ios_base::openmode flag, const string& delimiter, const string& period)
+void write_elements(const vector<T>& vec, const string& file_name, ios_base::openmode mode, const string& delimiter, const string& period)
 // write elements of a vector on file_name
 // elements are delimited by the delimiter
 // the writing is ended by the period
 {
 	fstream file;
-	file.open(file_name, flag);
+	file.open(file_name, mode);
 
 	if (file.is_open()) {
-
-		size_t size = vec.size();
+		const size_t size = vec.size();
 
 		if (size == 0)
 			file << period;
@@ -219,16 +246,14 @@ void write_elements(const vector<T>& vec, const string& file_name, ios_base::ope
 		cerr << "Error: Unable to open file.\n";
 }
 
-template void write_elements<size_t>(const vector<size_t>& vec, const string& file_name, ios_base::openmode flag, const string& delimiter, const string& period);
-
 // writes a single element on a file
 template<typename T>
-void write_single_element(const T& t, const string& file_name, ios_base::openmode flag, const string& period)
-// write a single element on file_name
+void write_single_element(const T& t, const string& file_name, ios_base::openmode mode, const string& period)
+// writes a single element on file_name
 // the writing is ended by the period
 {
 	fstream file;
-	file.open(file_name, flag);
+	file.open(file_name, mode);
 
 	if (file.is_open()) {
 		file << t << period;
@@ -238,167 +263,34 @@ void write_single_element(const T& t, const string& file_name, ios_base::openmod
 		cerr << "Error: Unable to open file.\n";
 }
 
-template void write_single_element<size_t>(const size_t& t, const string& file_name, ios_base::openmode flag, const string& period);
-
-// fills a file with a given pattern
-template<typename T>
-void fill_with_pattern(const T& t, const size_t time, const string& file_name, ios_base::openmode flag, const string& period)
-// fills a file with a pattern a given number of times
-// the writing is ended by the period
+// updates the resume file
+void update_resume_file(const Resume&  resume) 
+// saves the question position, the questions order and retry indexes on the resume file
 {
-	fstream file;
-	file.open(file_name, flag);
+	const size_t& position = resume.position;
+	const vector<size_t>& indexes = resume.indexes;
+	const vector<size_t>& retry_indexes = resume.retry_indexes;
 
-	if (file.is_open()) {
-		for (size_t i = 0; i < time; ++i)
-			file << t;
-		file << period;
-		file.close();
-	}
-	else
-		cerr << "Error: Unable to open file.\n";
-}
+	// saves the question position
+	write_single_element(position, resume_file, ios_base::out, " $\n");
 
-template void fill_with_pattern<string>(const string& t, const size_t time, const string& file_name, ios_base::openmode flag, const string& period);
-
-// sets up resume file
-void set_resume_file(const string& resume_file_address, const vector<size_t>& indexes, const vector<size_t>& retry_indexes = vector<size_t>{}) {
-	// fills the first line with whitespaces
-	fill_with_pattern(" ", 6, resume_file_address, ios::out | ios::trunc, "$\n");
-
-	// saves the question order in resume file
-	write_elements(indexes, resume_file_address, ios::app, " ", " $\n");
+	// saves the questions order
+	write_elements(indexes, resume_file, ios_base::app, " ", " $\n");
 
 	// saves retry indexes
-	write_elements(retry_indexes, resume_file_address, ios::app, " ", " $\n");
+	write_elements(retry_indexes, resume_file, ios_base::app, " ", " $");
 }
 
 // gets user's answer
-string get_answer() {
+string get_answer() 
+// gets the user's answer delimited by fine_line_delimiter
+{
 	string answer;
 	for (; getline(cin, answer, file_line_delimiter);) {
 		if (cin.peek() == newline) break;
 	}
 	getchar(); // deals with the newline
 	return answer;
-}
-
-
-// checks if there's a quiz to resume
-bool is_quiz_to_resume(const string& resume_file_address)
-// checks if there's a quiz to resume (i.e. valid question_number in resume file) and returns true or false
-{
-	bool can_be_resumed { false };
-
-	ifstream file;
-	file.open(resume_file_address);
-
-	if (file.is_open()) {
-		size_t question_number { 0 };
-		if (file >> question_number)
-			can_be_resumed = true;
-		else {
-			file.clear();
-			can_be_resumed = false;
-		}
-		file.close();
-	}
-	else
-		cerr << "Error: Unable to open file.\n";
-
-	return can_be_resumed;
-}
-
-// checks if there are questions to practice with
-bool are_questions_to_practice(const string& resume_file_address)
-// checks if there are questions to practice with (i.e. at least one question in retry_indexes) and returns true or false
-{
-	// question number to start with
-	size_t first_question_index { 0 };
-
-	// vector containing the order by which the questions will appear
-	vector<size_t> indexes;
-
-	// vector of questions to retry
-	vector<size_t> retry_indexes;
-
-	// gets resume file information
-	get_resume_information(resume_file_address, first_question_index, indexes, retry_indexes);
-
-	// checks the size of retry_indexes
-	if (retry_indexes.size() > 0)
-		return true;
-
-	return false;
-}
-
-// gets resume file information
-void get_resume_information(string const& resume_file, size_t& current_question
-	, vector<size_t>& indexes, vector<size_t>& retry_indexes)
-// retrieves current question, questions order index and retry indexes from resume file
-{
-	ifstream file;
-	file.open(resume_file);
-
-	if (file.is_open()) {
-		// retrieves current question
-		if (file >> current_question)
-			--current_question;
-		else
-			file.clear();
-		file.ignore(numeric_limits<streamsize>::max(), newline);
-
-		// retrieves questions order index
-		size_t index { 0 };
-		while (file >> index)
-			indexes.push_back(index);
-
-		file.clear();
-		file.ignore(numeric_limits<streamsize>::max(), newline);
-
-		// retrieves retry indexes
-		while (file >> index)
-			retry_indexes.push_back(index);
-
-		file.clear();
-		file.ignore(numeric_limits<streamsize>::max(), newline);
-
-		file.close();
-	}
-	else
-		cerr << "Error: Unable to open file.\n";
-}
-
-// gets retry indexes
-vector<size_t> get_retry_indexes(const string& resume_file_address)
-// retrieves retry indexes from resume file
-{
-	ifstream file;
-	file.open(resume_file_address);
-
-	vector<size_t> retry_indexes;
-
-	if (file.is_open()) {
-		// ignores current question
-		file.ignore(numeric_limits<streamsize>::max(), newline);
-
-		// ignores questions order index
-		file.ignore(numeric_limits<streamsize>::max(), newline);
-
-		// retrieves retry indexes
-		size_t index { 0 };
-		while (file >> index)
-			retry_indexes.push_back(index);
-
-		file.clear();
-		file.ignore(numeric_limits<streamsize>::max(), newline);
-
-		file.close();
-	}
-	else
-		cerr << "Error: Unable to open file.\n";
-
-	return retry_indexes;
 }
 
 // shuffles vector
@@ -408,229 +300,76 @@ void shuffle_vector(vector<T>& vec) {
 	shuffle(vec.begin(), vec.end(), rd);
 }
 
-template void shuffle_vector<size_t>(vector<size_t>& vec);
+// gets position 
+size_t get_position(const Resume& resume, const Quiz::Mode& mode) {
+	switch (mode) {
+	case Quiz::Mode::resume:
+		return resume.position;
 
-// copies line from a file to another
-void copy_lines(const string& src_filename, const string& dst_filename, const size_t& n, ios_base::openmode mode = ios::out | ios::binary)
-// copies the first n lines from src_filename into dst_filename
-{
-	fstream src(src_filename, ios::in | ios::binary);
-	if(src.is_open()){
-		fstream dst(dst_filename, mode);
-		if(dst.is_open()){
-			for(size_t i = 0; i < n; ++i){
-				string sinput;
-				getline(src, sinput);
-				dst << sinput << newline;
-			}
-			dst.close();
-		}
-		src.close();
+	default:
+		return 0;
 	}
+}
+
+// gets indexes 
+vector<size_t> get_indexes(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mode) {
+	vector<size_t> indexes;
+
+	switch (mode) {
+	case Quiz::Mode::normal:
+		indexes = get_random_int_distribution(quiz.questions.size());
+		break;
+
+	case Quiz::Mode::resume:
+		indexes = resume.indexes;
+		break;
+
+	case Quiz::Mode::practice:
+		indexes = resume.retry_indexes;
+		shuffle_vector(indexes);
+		break;
+	}
+	
+	return indexes;
 }
 
 // quiz launcher
-void quiz_launcher(const vector<string>& questions, const vector<string>& answers, const string& settings_file)
-// (1) checks the resume file and determines if there's a quiz to resume
-// (2) gives to the user the choice to resume quiz or not
-// (3) displays a questions, wait for user's answer,
-// (4) displays the right answer
-// (5) gives the user the choice to retry later
-{	
-	// retrieves settings information from file
-	vector<size_t> settings = get_settings(settings_file);
-
-	// initializes resume file address
-	const string resume_file_address { "resume_quiz.txt" };
-
-	// initializes save file address
-	const string save_file { "save.txt" };
-
-	// exit sequence
-	const string exit_sequence { "exit" };
-
-	// maximum number of the same question allowed in retry list
-	const size_t maximum_number_of_questions { 10 };
-
-	// creates resume file if it doesn't exist
-	create_file_if(resume_file_address);
-
-	// checks if there's a quiz to resume
-	bool can_be_resumed = is_quiz_to_resume(resume_file_address);
-
-	// vector containing the order by which the questions will appear
-	vector<size_t> indexes;
-
-	// vector of questions to retry
-	vector<size_t> retry_indexes;
-
-	// question number to start with
-	size_t first_question_index { 0 };
-
-	// gives to the user the choice to resume previous quiz
-	if (can_be_resumed) {
-		cout << "\033[" << settings[size_t(Property::prompt)] << "mDo you want to resume last quiz ?\033[0m\n";
-
-		string choice { "" };
-		while (getline(cin, choice)) {
-			if (choice.size() != 1) choice = "0";
-
-			switch (choice[0]) {
-			case yes:
-				get_resume_information(resume_file_address, first_question_index, indexes, retry_indexes);
-				cout << '\n';
-				break;
-
-			case no:
-				indexes = get_random_int_distribution(questions.size());
-				cout << '\n';
-				break;
-
-			default:
-				cout << "\n\033[" << settings[size_t(Property::prompt)] << "mPlease enter a valid choice.\033[0m\n";
-				continue;
-			}
-
-			break;
-		}
-	}
-	else {
-		// gets retry indexes from resume file
-		retry_indexes = get_retry_indexes(resume_file_address);
-
-		if(retry_indexes.empty())
-			indexes = get_random_int_distribution(questions.size());
-		else {
-			// informs the user that there are questions to practice with
-			cout << "\033[" << settings[size_t(Property::prompt)] << "mThere are questions available to practice with. Do you want to proceed?\033[0m\n";
-
-			for (string choice; getline(cin, choice);) {
-				if (choice.size() != 1) choice = "0";
-
-				switch (choice[0]) {
-				case yes:
-					indexes = get_random_int_distribution(questions.size());
-					cout << '\n';
-					break;
-
-				case no:
-					return;
-
-				default:
-					cout << "\n\033[" << settings[size_t(Property::prompt)] << "mPlease enter a valid choice.\033[0m\n";
-					continue;
-				}
-
-				break;
-			}
-		}
-	}
-
-	size_t indexes_size = indexes.size();
-
-	// sets up resume and save files
-	set_resume_file(resume_file_address, indexes, retry_indexes);
-
-	for (size_t i = first_question_index; i < indexes_size; ++i) {
-		// displays current question number
-		cout << i + 1 << "\\" << indexes_size << '\n';
-
-		// adds current question_number to resume file
-		write_single_element(i + 1, resume_file_address, ios::in | ios::out, "");
-
-		// displays current question
-		cout << "\033[" << settings[size_t(Property::question)] << "m" << questions[indexes[i]] << "\033[0m\n\n";
-
-		// gets user's answer
-		string answer = get_answer();
-
-		// exit when answer = exit
-		if (answer == exit_sequence) return;
-
-		// displays current question's answer and index
-		cout << "\n[\033[" << settings[size_t(Property::answer_index)] << "m" << indexes[i] << "\033[0m]\n";
-		cout << '\n' << answers[indexes[i]] << '\n';
-
-		// asks if the user will retry the question and handles choice
-		cout << "\n\033[" << settings[size_t(Property::prompt)] << "mRetry this question later ? \033[0m";
-
-		for (string choice; getline(cin, choice);) {
-			if (choice.length() != 1) choice.clear(); // the answer is invalid
-
-			switch (choice[0]) {
-			case yes:
-			{
-				cout << '\n';
-				get_answer(); // enables user to review failed question
-
-				// adds the question index in the retry indexes
-				size_t number_of_items = (size_t) count(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
-				while(number_of_items != maximum_number_of_questions) {
-					retry_indexes.push_back(indexes[i]);
-					number_of_items = (size_t) count(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
-				}
-			}
-				break;
-
-			case no:
-			{
-				// removes the question index from the retry indexes if present
-				vector<size_t>::iterator it = find(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
-				if (it != retry_indexes.end()) retry_indexes.erase(it);
-			}
-				break;
-
-			default:
-				cout << "\n\033[" << settings[size_t(Property::prompt)] << "mPlease enter a valid choice.\033[0m\n";
-				continue;
-			}
-
-			if (i != indexes_size - 1) cout << '\n';
-
-			break;
-		}
-		// copies the resume file
-		copy_file(resume_file_address, save_file);
-
-		// updates the resume file
-		copy_lines(save_file, resume_file_address, 2);
-		write_elements(retry_indexes, resume_file_address, ios::app, " ", " $");
-		remove(save_file.c_str());
-	}
-
-	// fills the first line with whitespaces
-	fill_with_pattern(" ", 6, resume_file_address, ios::in | ios::out, "");
-}
-
-// simple quiz launcher
-void simple_quiz_launcher(const vector<string>& questions, const vector<string>& answers, const vector<size_t>& indexes, const string& resume_file, const string& settings_file)
-// (1) displays a questions, wait for user's answer,
+void quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mode)
+// (1) displays a question, wait for the user's answer,
 // (2) displays the right answer
-// indexes provides the questions and their order of display
+// (3) checks if the user wants to retry the question later
 {
 	// retrieves settings information from file
-	vector<size_t> settings = get_settings(settings_file);
+	const vector<size_t> settings = get_settings();
 
-	// makes a copy of the retry indexes
-	vector<size_t> updated_indexes { indexes };
+	// retrieves the quiz information
+	const vector<string>& questions = quiz.questions;
+	const vector<string>& answers = quiz.answers;
 
-	// exit sequence
-	const string exit_sequence { "exit" };
+	size_t position = get_position(resume, mode); // question number to start with
+	const vector<size_t> indexes = get_indexes(quiz, resume, mode);
+	vector<size_t> retry_indexes = resume.retry_indexes;
 
-	// save file
-	const string save_file { "save.txt" };
-
-	// maximum number of the same question allowed in retry list
-	const size_t maximum_number_of_questions { 10 };
-
-	// question number to start with
-	size_t first_question_index { 0 };
+	// sets up resume file
+	Resume updated_resume { position + 1, indexes, retry_indexes };
+	if (mode == Quiz::Mode::practice) {
+		updated_resume.position = get_position(resume, Quiz::Mode::resume) + 1;
+		updated_resume.indexes = get_indexes(quiz, resume, Quiz::Mode::resume);
+	}
+	update_resume_file(updated_resume);
 
 	size_t indexes_size = indexes.size();
 
-	for (size_t i = first_question_index; i < indexes_size; ++i) {
-		// displays current question number
-		cout << i + 1 << "\\" << indexes_size << '\n';
+	for (size_t i = position; i < indexes_size; ++i) {
+		// displays current question position
+		position = i + 1;
+		cout << position << "\\" << indexes_size << '\n';
+
+		// updates resume file
+		if (mode != Quiz::Mode::practice) {
+			updated_resume.position = position;
+			update_resume_file(updated_resume);
+		}
 
 		// displays current question
 		cout << "\033[" << settings[size_t(Property::question)] << "m" << questions[indexes[i]] << "\033[0m\n\n";
@@ -646,33 +385,45 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 		cout << '\n' << answers[indexes[i]] << '\n';
 
 		// checks if questions should be removed from the resume file 
-		cout << "\033[" << settings[size_t(Property::prompt)] << "m\nRemove from retry list ? \033[0m";
+		if(mode == Quiz::Mode::practice) cout << "\033[" << settings[size_t(Property::prompt)] << "m\nKeep in retry list ?\n\033[0m";
+		else cout << "\n\033[" << settings[size_t(Property::prompt)] << "mRetry this question later ?\n\033[0m";
 
 		for (string choice; getline(cin, choice);) {
-			if(choice.length() != 1) choice.clear(); // the answer is invalid
+			if(choice.length() != 1) choice = "0"; // the choice is invalid
 
 			switch(choice[0]){
 			case yes:
-				{
-					// removes the question index from the retry indexes if present
-					vector<size_t>::iterator it = find(updated_indexes.begin(), updated_indexes.end(), indexes[i]);
-					if(it != updated_indexes.end()) updated_indexes.erase(it);
+			{
+				// adds the question index in the retry indexes
+				size_t number_of_items = (size_t)count(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
+
+				if (mode != Quiz::Mode::practice) {
+					cout << '\n';
+					get_answer(); // enables user to review failed qu estion
+					while (number_of_items != maximum_number_of_questions) {
+						retry_indexes.push_back(indexes[i]);
+						number_of_items = (size_t)count(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
+					}
 				}
-				break;
+				else {
+					if (number_of_items < maximum_number_of_questions) retry_indexes.push_back(indexes[i]);
+				}
+			}
+			break;
 
 			case no:
-				{
-					// adds the question index in the retry indexes
-					size_t number_of_items = (size_t) count(updated_indexes.begin(), updated_indexes.end(), indexes[i]);
-					if(number_of_items < maximum_number_of_questions) updated_indexes.push_back(indexes[i]);
-				}
-				break;
+			{
+				// removes the question index from the retry indexes if present
+				vector<size_t>::iterator it = find(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
+				if (it != retry_indexes.end()) retry_indexes.erase(it);
+			}
+			break;
 
 			case alternative_no:
-				{
-					// does nothing
-				}
-				break;
+			{
+				// does nothing
+			}
+			break;
 
 			default:
 				cout << "\n\033[" << settings[size_t(Property::prompt)] << "mPlease enter a valid choice.\033[0m\n";
@@ -682,14 +433,17 @@ void simple_quiz_launcher(const vector<string>& questions, const vector<string>&
 			break;
 		}
 
-		// copies the resume file
-		copy_file(resume_file, save_file);
-
-		// updates the resume file
-		copy_lines(save_file, resume_file, 2);	
-		write_elements(updated_indexes, resume_file, ios::app, " ", " $");
-		remove(save_file.c_str());
+		// updates resume file
+		updated_resume.retry_indexes = retry_indexes;
+		update_resume_file(updated_resume);
 
 		if (i != indexes_size - 1) cout << '\n';
+	}
+
+	// updates resume file
+	if (mode != Quiz::Mode::practice) {
+		updated_resume.position = 0;
+		updated_resume.retry_indexes = retry_indexes;
+		update_resume_file(updated_resume);
 	}
 }
