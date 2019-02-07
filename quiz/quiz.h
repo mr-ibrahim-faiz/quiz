@@ -24,7 +24,9 @@ const string exit_sequence { "exit" };
 
 // maximum number of the same question allowed in retry list
 const size_t maximum_number_of_questions { 10 };
-constexpr size_t INVALID_POSITION = 0;
+const string INVALID_CHOICE = "0";
+constexpr size_t INITIAL_POSITION = 0;
+constexpr size_t INVALID_POSITION = numeric_limits<size_t>::max();
 
 // file names
 const string questions_answers_file { "questions_answers.txt" };

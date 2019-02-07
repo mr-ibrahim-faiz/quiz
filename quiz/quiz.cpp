@@ -92,10 +92,13 @@ Quiz get_questions_and_answers()
 	if (file.is_open()) {
 
 		for (string line; getline(file, line, file_line_delimiter);) {
-			questions.push_back(line);
+			if(!line.empty()) questions.push_back(line);
 			file.ignore(1, newline);
+
+			line.clear();
 			getline(file, line, file_line_delimiter);
-			answers.push_back(line);
+			if(!line.empty()) answers.push_back(line);
+
 			file >> ws;
 		}
 		file.close();
@@ -109,7 +112,7 @@ Quiz get_questions_and_answers()
 
 // gets resume file information
 Resume get_resume_information()
-// retrieves current question, questions order index and retry indexes from resume file
+// retrieves current question position, questions order index and retry indexes from resume file
 {
 	Resume resume;
 	size_t& position = resume.position;
@@ -120,9 +123,9 @@ Resume get_resume_information()
 	file.open(resume_file);
 
 	if (file.is_open()) {
-		// retrieves current question
-		if (file >> position && position != 0) --position;
-		else position = 0;
+		// retrieves current question position
+		if (file >> position){}
+		else position = INVALID_POSITION;
 
 		file.clear();
 		file.ignore(numeric_limits<streamsize>::max(), newline);
@@ -307,7 +310,7 @@ size_t get_position(const Resume& resume, const Quiz::Mode& mode) {
 		return resume.position;
 
 	default:
-		return 0;
+		return INITIAL_POSITION;
 	}
 }
 
@@ -346,24 +349,24 @@ void quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mod
 	const vector<string>& questions = quiz.questions;
 	const vector<string>& answers = quiz.answers;
 
-	size_t position = get_position(resume, mode); // question number to start with
+	size_t position = get_position(resume, mode); // question to start with
 	const vector<size_t> indexes = get_indexes(quiz, resume, mode);
 	vector<size_t> retry_indexes = resume.retry_indexes;
 
 	// sets up resume file
-	Resume updated_resume { position + 1, indexes, retry_indexes };
+	Resume updated_resume { position, indexes, retry_indexes };
 	if (mode == Quiz::Mode::practice) {
-		updated_resume.position = get_position(resume, Quiz::Mode::resume) + 1;
+		updated_resume.position = get_position(resume, Quiz::Mode::resume);
 		updated_resume.indexes = get_indexes(quiz, resume, Quiz::Mode::resume);
 	}
 	update_resume_file(updated_resume);
 
 	size_t indexes_size = indexes.size();
 
-	for (size_t i = position; i < indexes_size; ++i) {
+	for (; position < indexes_size; ++position) {
 		// displays current question position
-		position = i + 1;
-		cout << position << "\\" << indexes_size << '\n';
+		size_t question_number = position + 1;
+		cout << question_number << "\\" << indexes_size << '\n';
 
 		// updates resume file
 		if (mode != Quiz::Mode::practice) {
@@ -372,7 +375,7 @@ void quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mod
 		}
 
 		// displays current question
-		cout << "\033[" << settings[size_t(Property::question)] << "m" << questions[indexes[i]] << "\033[0m\n\n";
+		cout << "\033[" << settings[size_t(Property::question)] << "m" << questions[indexes[position]] << "\033[0m\n\n";
 
 		// gets user's answer
 		string answer = get_answer();
@@ -381,32 +384,32 @@ void quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mod
 		if(answer == exit_sequence) return;
 
 		// displays current question's answer and index
-		cout << "\n[\033[" << settings[size_t(Property::answer_index)] << "m" << indexes[i] << "\033[0m]\n";
-		cout << '\n' << answers[indexes[i]] << '\n';
+		cout << "\n[\033[" << settings[size_t(Property::answer_index)] << "m" << indexes[position] << "\033[0m]\n";
+		cout << '\n' << answers[indexes[position]] << '\n';
 
 		// checks if questions should be removed from the resume file 
 		if(mode == Quiz::Mode::practice) cout << "\033[" << settings[size_t(Property::prompt)] << "m\nKeep in retry list ?\n\033[0m";
 		else cout << "\n\033[" << settings[size_t(Property::prompt)] << "mRetry this question later ?\n\033[0m";
 
 		for (string choice; getline(cin, choice);) {
-			if(choice.length() != 1) choice = "0"; // the choice is invalid
+			if(choice.length() != 1) choice = INVALID_CHOICE; // the choice is invalid
 
 			switch(choice[0]){
 			case yes:
 			{
 				// adds the question index in the retry indexes
-				size_t number_of_items = (size_t)count(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
+				size_t number_of_items = (size_t) count(retry_indexes.begin(), retry_indexes.end(), indexes[position]);
 
 				if (mode != Quiz::Mode::practice) {
 					cout << '\n';
 					get_answer(); // enables user to review failed qu estion
 					while (number_of_items != maximum_number_of_questions) {
-						retry_indexes.push_back(indexes[i]);
-						number_of_items = (size_t)count(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
+						retry_indexes.push_back(indexes[position]);
+						number_of_items = (size_t)count(retry_indexes.begin(), retry_indexes.end(), indexes[position]);
 					}
 				}
 				else {
-					if (number_of_items < maximum_number_of_questions) retry_indexes.push_back(indexes[i]);
+					if (number_of_items < maximum_number_of_questions) retry_indexes.push_back(indexes[position]);
 				}
 			}
 			break;
@@ -414,7 +417,7 @@ void quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mod
 			case no:
 			{
 				// removes the question index from the retry indexes if present
-				vector<size_t>::iterator it = find(retry_indexes.begin(), retry_indexes.end(), indexes[i]);
+				vector<size_t>::iterator it = find(retry_indexes.begin(), retry_indexes.end(), indexes[position]);
 				if (it != retry_indexes.end()) retry_indexes.erase(it);
 			}
 			break;
@@ -437,12 +440,12 @@ void quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mod
 		updated_resume.retry_indexes = retry_indexes;
 		update_resume_file(updated_resume);
 
-		if (i != indexes_size - 1) cout << '\n';
+		if (position != indexes_size - 1) cout << '\n';
 	}
 
 	// updates resume file
 	if (mode != Quiz::Mode::practice) {
-		updated_resume.position = 0;
+		updated_resume.position = INVALID_POSITION;
 		updated_resume.retry_indexes = retry_indexes;
 		update_resume_file(updated_resume);
 	}

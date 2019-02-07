@@ -34,7 +34,7 @@ try
 
 	// gets user's choice
 	for(string choice; getline(cin, choice);){
-		if (choice.length() != 1) choice = "0";
+		if (choice.length() != 1) choice = INVALID_CHOICE;
 		else {
 			// retrieves quiz information from file
 			quiz = get_questions_and_answers();
