@@ -297,7 +297,7 @@ string get_answer()
 }
 
 // reviews a question
-void review(const string& question, const string& answer)
+void review(const string& question, const string& answer, const size_t& index)
 // review a question an arbitrary number of times 
 {
 	// retrieves settings information from file
@@ -315,7 +315,8 @@ void review(const string& question, const string& answer)
 			// gets user's answer
 			get_answer();
 			
-			// displays current question's answer and index
+			// displays current question's answer
+			cout << "\n[\033[" << settings[size_t(Property::answer_index)] << "m" << index << "\033[0m]\n";
 			cout << '\n' << answer << '\n';
 			cout << "\033[" << settings[size_t(Property::prompt)] << "m\nTry again ?\n\033[0m";
         }
@@ -420,9 +421,10 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 			update_resume_file(updated_resume);
 		}
 
-		// current question and answer
+		// current question and answer and question's index
 		const string& question = questions[indexes[position]];
 		const string& answer = answers[indexes[position]];
+		const size_t& index = indexes[position];
 
 		// displays current question
 		cout << "\033[" << settings[size_t(Property::question)] << "m" << question << "\033[0m\n\n";
@@ -431,7 +433,7 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 		if(get_answer() == exit_sequence) return updated_resume.retry_indexes;
 
 		// displays current question's answer and index
-		cout << "\n[\033[" << settings[size_t(Property::answer_index)] << "m" << indexes[position] << "\033[0m]\n";
+		cout << "\n[\033[" << settings[size_t(Property::answer_index)] << "m" << index << "\033[0m]\n";
 		cout << '\n' << answer << '\n';
 
 		// checks if questions should be removed from the resume file 
@@ -459,7 +461,7 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 
 					cout << "\n[Review]\n";
 
-					review(question, answer); // enables user to review failed question
+					review(question, answer, index); // enables user to review failed question
 				}
 				else {
 					if (number_of_items < maximum_number_of_questions) retry_indexes.push_back(indexes[position]);

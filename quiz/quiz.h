@@ -112,7 +112,7 @@ void update_resume_file(const Resume&);
 string get_answer();
 
 // reviews a question
-void review(const string&, const string&);
+void review(const string&, const string&, const size_t&);
 
 // shuffles vector
 template<typename T>
