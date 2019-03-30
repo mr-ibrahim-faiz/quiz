@@ -296,6 +296,41 @@ string get_answer()
 	return answer;
 }
 
+// reviews a question
+void review(const string& question, const string& answer)
+// review a question an arbitrary number of times 
+{
+	// retrieves settings information from file
+	const vector<size_t> settings = get_settings();
+	
+	for(string choice { yes }; ; getline(cin, choice)){
+		if(choice.length() != 1) choice = INVALID_CHOICE; // the choice is invalid
+		
+		switch(choice[0]){
+		case yes:
+		{
+			// displays question
+			cout << "\033[" << settings[size_t(Property::question)] << "m\n" << question << "\033[0m\n\n";
+			
+			// gets user's answer
+			get_answer();
+			
+			// displays current question's answer and index
+			cout << '\n' << answer << '\n';
+			cout << "\033[" << settings[size_t(Property::prompt)] << "m\nTry again ?\n\033[0m";
+        }
+        	break;
+
+        case no:
+        	return;
+
+        default:
+			cout << "\n\033[" << settings[size_t(Property::prompt)] << "mPlease enter a valid choice.\033[0m\n";
+        	break;
+        }
+    }
+}
+
 // shuffles vector
 template<typename T>
 void shuffle_vector(vector<T>& vec) {
@@ -337,10 +372,11 @@ vector<size_t> get_indexes(const Quiz& quiz, const Resume& resume, const Quiz::M
 }
 
 // quiz launcher
-void quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mode)
+vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mode)
 // (1) displays a question, wait for the user's answer,
 // (2) displays the right answer
 // (3) checks if the user wants to retry the question later
+// (4) returns the indexes of questions we want to try later
 {
 	// retrieves settings information from file
 	const vector<size_t> settings = get_settings();
@@ -364,6 +400,16 @@ void quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mod
 	size_t indexes_size = indexes.size();
 
 	for (; position < indexes_size; ++position) {
+		// calls practice mode if necessary
+		if(mode != Quiz::Mode::practice){
+			if (retry_indexes.size() >= minimum_number_of_questions) {
+				cout << "[Practice]\n\n";
+				retry_indexes = quiz_launcher(quiz, updated_resume, Quiz::Mode::practice);
+				updated_resume.retry_indexes = retry_indexes;
+				cout << "\n[Quiz]\n\n";
+			}
+		}
+
 		// displays current question position
 		size_t question_number = position + 1;
 		cout << question_number << "\\" << indexes_size << '\n';
@@ -374,18 +420,19 @@ void quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mod
 			update_resume_file(updated_resume);
 		}
 
+		// current question and answer
+		const string& question = questions[indexes[position]];
+		const string& answer = answers[indexes[position]];
+
 		// displays current question
-		cout << "\033[" << settings[size_t(Property::question)] << "m" << questions[indexes[position]] << "\033[0m\n\n";
+		cout << "\033[" << settings[size_t(Property::question)] << "m" << question << "\033[0m\n\n";
 
-		// gets user's answer
-		string answer = get_answer();
-
-		// checks if the user wants to exit
-		if(answer == exit_sequence) return;
+		// gets user's answer and checks if the user wants to exit
+		if(get_answer() == exit_sequence) return updated_resume.retry_indexes;
 
 		// displays current question's answer and index
 		cout << "\n[\033[" << settings[size_t(Property::answer_index)] << "m" << indexes[position] << "\033[0m]\n";
-		cout << '\n' << answers[indexes[position]] << '\n';
+		cout << '\n' << answer << '\n';
 
 		// checks if questions should be removed from the resume file 
 		if(mode == Quiz::Mode::practice) cout << "\033[" << settings[size_t(Property::prompt)] << "m\nKeep in retry list ?\n\033[0m";
@@ -401,12 +448,18 @@ void quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mod
 				size_t number_of_items = (size_t) count(retry_indexes.begin(), retry_indexes.end(), indexes[position]);
 
 				if (mode != Quiz::Mode::practice) {
-					cout << '\n';
-					get_answer(); // enables user to review failed qu estion
 					while (number_of_items != maximum_number_of_questions) {
 						retry_indexes.push_back(indexes[position]);
 						number_of_items = (size_t)count(retry_indexes.begin(), retry_indexes.end(), indexes[position]);
 					}
+
+					// updates resume file
+					updated_resume.retry_indexes = retry_indexes;
+					update_resume_file(updated_resume);
+
+					cout << "\n[Review]\n";
+
+					review(question, answer); // enables user to review failed question
 				}
 				else {
 					if (number_of_items < maximum_number_of_questions) retry_indexes.push_back(indexes[position]);
@@ -449,4 +502,6 @@ void quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mod
 		updated_resume.retry_indexes = retry_indexes;
 		update_resume_file(updated_resume);
 	}
+
+	return updated_resume.retry_indexes;
 }

@@ -24,6 +24,7 @@ const string exit_sequence { "exit" };
 
 // maximum number of the same question allowed in retry list
 const size_t maximum_number_of_questions { 3 };
+const size_t minimum_number_of_questions { 15 };
 const string INVALID_CHOICE = "0";
 constexpr size_t INITIAL_POSITION = 0;
 constexpr size_t INVALID_POSITION = numeric_limits<size_t>::max();
@@ -110,6 +111,9 @@ void update_resume_file(const Resume&);
 // gets user's answer
 string get_answer();
 
+// reviews a question
+void review(const string&, const string&);
+
 // shuffles vector
 template<typename T>
 void shuffle_vector(vector<T>&);
@@ -121,4 +125,4 @@ size_t get_position(const Resume&, const Quiz::Mode&);
 vector<size_t> get_indexes(const Quiz&, const Resume&, const Quiz::Mode&);
 
 // simple quiz launcher
-void quiz_launcher(const Quiz&, const Resume&, const Quiz::Mode&);
+vector<size_t> quiz_launcher(const Quiz&, const Resume&, const Quiz::Mode&);
