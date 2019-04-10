@@ -8,6 +8,9 @@
 *.sln.docstates
 quiz/quiz
 quiz/resume_quiz.txt
+*.sln
+*.vcxproj
+*.vcxproj.filters
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
