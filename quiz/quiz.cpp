@@ -458,14 +458,13 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 					// updates resume file
 					updated_resume.retry_indexes = retry_indexes;
 					update_resume_file(updated_resume);
-
-					cout << "\n[Review]\n";
-
-					review(question, answer, index); // enables user to review failed question
 				}
 				else {
 					if (number_of_items < maximum_number_of_questions) retry_indexes.push_back(indexes[position]);
 				}
+				
+				cout << "\n[Review]\n";
+				review(question, answer, index); // enables user to review failed question
 			}
 			break;
 
