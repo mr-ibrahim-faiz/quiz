@@ -426,6 +426,9 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 		const string& answer = answers[indexes[position]];
 		const size_t& index = indexes[position];
 
+		// keeps track of the number of a specific item in retry list
+		size_t number_of_items = (size_t) count(retry_indexes.begin(), retry_indexes.end(), index);
+
 		// displays current question
 		cout << "\033[" << settings[size_t(Property::question)] << "m" << question << "\033[0m\n\n";
 
@@ -437,8 +440,8 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 		cout << '\n' << answer << '\n';
 
 		// checks if questions should be removed from the resume file 
-		if(mode == Quiz::Mode::practice) cout << "\033[" << settings[size_t(Property::prompt)] << "m\nKeep in retry list ?\n\033[0m";
-		else cout << "\n\033[" << settings[size_t(Property::prompt)] << "mRetry this question later ?\n\033[0m";
+		if(mode == Quiz::Mode::practice) cout << "\033[" << settings[size_t(Property::prompt)] << "m\n" << ((number_of_items == 1)? "Last appearance !\n" : "") << "Keep in retry list ?\n\033[0m";
+		else cout << "\n\033[" << settings[size_t(Property::prompt)] << "m" << ((number_of_items == 0)? "Add to" : "Keep in") << " retry list ?\n\033[0m";
 
 		for (string choice; getline(cin, choice);) {
 			if(choice.length() != 1) choice = INVALID_CHOICE; // the choice is invalid
@@ -447,12 +450,10 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 			case yes:
 			{
 				// adds the question index in the retry indexes
-				size_t number_of_items = (size_t) count(retry_indexes.begin(), retry_indexes.end(), indexes[position]);
-
 				if (mode != Quiz::Mode::practice) {
 					while (number_of_items != maximum_number_of_questions) {
-						retry_indexes.push_back(indexes[position]);
-						number_of_items = (size_t)count(retry_indexes.begin(), retry_indexes.end(), indexes[position]);
+						retry_indexes.push_back(index);
+						number_of_items = (size_t) count(retry_indexes.begin(), retry_indexes.end(), index);
 					}
 
 					// updates resume file
@@ -460,7 +461,7 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 					update_resume_file(updated_resume);
 				}
 				else {
-					if (number_of_items < maximum_number_of_questions) retry_indexes.push_back(indexes[position]);
+					if (number_of_items < maximum_number_of_questions) retry_indexes.push_back(index);
 				}
 				
 				cout << "\n[Review]\n";
@@ -471,7 +472,7 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 			case no:
 			{
 				// removes the question index from the retry indexes if present
-				vector<size_t>::iterator it = find(retry_indexes.begin(), retry_indexes.end(), indexes[position]);
+				vector<size_t>::iterator it = find(retry_indexes.begin(), retry_indexes.end(), index);
 				if (it != retry_indexes.end()) retry_indexes.erase(it);
 			}
 			break;
