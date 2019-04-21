@@ -446,7 +446,9 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 		for (string choice; getline(cin, choice);) {
 			if(choice.length() != 1) choice = INVALID_CHOICE; // the choice is invalid
 
-			switch(choice[0]){
+			const char& user_choice = choice[0];
+
+			switch(user_choice){
 			case yes:
 			{
 				// adds the question index in the retry indexes
@@ -476,6 +478,17 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 				if (it != retry_indexes.end()) retry_indexes.erase(it);
 			}
 			break;
+
+			case alternative_yes:
+			{
+				// adds the question index in the retry indexes
+				if (mode != Quiz::Mode::practice) {
+					if (number_of_items < maximum_number_of_questions) retry_indexes.push_back(index);
+				}
+
+				cout << "\n[Review]\n";
+				review(question, answer, index); // enables user to review failed question
+			}
 
 			case alternative_no:
 			{

@@ -16,6 +16,7 @@ using std::numeric_limits;
 constexpr char newline { '\n' };
 constexpr char yes { '$' };
 constexpr char no { '*' };
+constexpr char alternative_yes { ':' };
 constexpr char alternative_no { '!' };
 constexpr char file_line_delimiter { '$' };
 constexpr char exit_character { 'x' };
