@@ -94,11 +94,11 @@ try
 
 	return 0;
 }
-catch (runtime_error& e) {
+catch (const runtime_error& e) {
 	cerr << "Error: " << e.what() << '\n';
 	return 1;
 }
-catch (out_of_range& e) {
+catch (const out_of_range& e) {
 	cerr << "Error: " << e.what() << '\n';
 	return 2;
 }
