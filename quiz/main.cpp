@@ -1,4 +1,4 @@
-#include "quiz.h"
+#include "quiz_launcher.h"
 
 #include<iostream>
 using std::cin;
@@ -6,8 +6,7 @@ using std::cout;
 using std::cerr;
 
 #include<stdexcept>
-using std::out_of_range;
-using std::runtime_error;
+using std::exception;
 
 int main()
 try
@@ -34,7 +33,7 @@ try
 
 	// gets user's choice
 	for(string choice; getline(cin, choice);){
-		if (choice.length() != 1) choice = INVALID_CHOICE;
+		if (choice.length() != valid_choice_length) choice = INVALID_CHOICE;
 		else {
 			// retrieves quiz information from file
 			quiz = get_questions_and_answers();
@@ -42,19 +41,17 @@ try
 			// retrieves resume information from file
 			resume = get_resume_information();
 		}
+		
+		const char& user_choice = choice[0];	
+		cout << newline;
 
-		switch (choice[0]) {
+		switch (user_choice) {
 		case '1':
-			if (questions.size()) {
-				cout << '\n';
-				list_elements(questions);
-			}
-			else
-				cout << "\nThe list is empty.\n";
+			if (questions.size()) list_elements(questions);
+			else cout << "The list is empty.\n";
 			break;
 
 		case '2':
-			cout << '\n';
 			if (!questions.empty() && questions.size() == answers.size()) {
 				if(resume.position == INVALID_POSITION) quiz_launcher(quiz, resume, Quiz::Mode::normal);
 				else quiz_launcher(quiz, resume, Quiz::Mode::resume);
@@ -66,43 +63,34 @@ try
 			break;
 
 		case '3':
-			cout << '\n';
-			if (!retry_indexes.empty()) {
-				quiz_launcher(quiz, resume, Quiz::Mode::practice);
-			}
-			else
-				cout << "Please enter a valid choice.\n";
+			if (!retry_indexes.empty()) quiz_launcher(quiz, resume, Quiz::Mode::practice);
+			else cout << "Please enter a valid choice.\n";
 			break;
 
 		case exit_character:
 			break;
 
 		default:
-			cout << "\nPlease enter a valid choice.\n";
+			cout << "Please enter a valid choice.\n";
 			break;
 		}
 
-		if (choice[0] == exit_character)
-			break;
+		if (user_choice == exit_character) break;
 		else {
-			cout << '\n';
+			cout << newline;
 			display_main_menu();
 		}
 	}
 
-	cout << "\nGoodbye !\n";
+	cout << "Goodbye !\n";
 
 	return 0;
 }
-catch (const runtime_error& e) {
-	cerr << "Error: " << e.what() << '\n';
+catch (const exception& e) {
+	cerr << "Error: " << e.what() << newline;
 	return 1;
-}
-catch (const out_of_range& e) {
-	cerr << "Error: " << e.what() << '\n';
-	return 2;
 }
 catch (...) {
 	cerr << "Error: unknown exception caught.\n";
-	return 3;
+	return 2;
 }

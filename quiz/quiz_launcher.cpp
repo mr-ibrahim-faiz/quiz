@@ -1,4 +1,4 @@
-#include "quiz.h"
+#include "quiz_launcher.h"
 #include "properties.h"
 
 #include<iostream>
@@ -7,9 +7,6 @@ using std::cout;
 using std::cerr;
 using std::ws;
 using std::streamsize;
-
-#include<chrono>
-using std::chrono::system_clock;
 
 #include<random>
 using std::random_device;
@@ -21,11 +18,27 @@ using std::shuffle;
 #include<fstream>
 using std::fstream;
 using std::ifstream;
-using std::ofstream;
-using std::ios_base;
 
 #include<algorithm>
 using std::find;
+
+// symbolic names
+constexpr char yes { '$' };
+constexpr char no { '*' };
+constexpr char alternative_yes { ':' };
+constexpr char alternative_no { '!' };
+constexpr char list_elements_delimiter { ':' };
+constexpr char file_line_delimiter { '$' };
+
+const string exit_sequence { "exit" };
+
+// constant expressions
+const size_t maximum_number_of_questions { 3 };
+const size_t minimum_number_of_questions { 15 };
+constexpr size_t INITIAL_POSITION = 0;
+
+// file names
+const string settings_file { "settings.txt" };
 
 // retrieves settings information from file
 vector<size_t> get_settings()
@@ -57,7 +70,7 @@ vector<size_t> get_settings()
 			}
 			else {
 				cerr << "Error: settings file is corrupted !\n";
-				cout << "Resetting...\n\n";
+				cout << "Resetting... ";
 
 				file.clear();
 				if(file.is_open()) file.close();
@@ -67,11 +80,12 @@ vector<size_t> get_settings()
 
 				result.clear();
 				result = get_settings();
+
+				cout << "Done...\n\n";
 			}
 		}
 	}
-	else
-		cerr << "Error: Unable to open file.\n";
+	else cerr << "Error: Unable to open file.\n";
 
 	return result;
 }
@@ -103,16 +117,14 @@ Quiz get_questions_and_answers()
 		}
 		file.close();
 	}
-	else { 
-		create_file_if(questions_answers_file);
-	}
+	else create_file_if(questions_answers_file);
 
 	return quiz;
 }
 
 // gets resume file information
 Resume get_resume_information()
-// retrieves current question position, questions order index and retry indexes from resume file
+// retrieves current question position, questions order indexes and retry indexes from resume file
 {
 	Resume resume;
 	size_t& position = resume.position;
@@ -147,8 +159,7 @@ Resume get_resume_information()
 
 		file.close();
 	}
-	else
-		cerr << "Error: Unable to open file.\n";
+	else cerr << "Error: Unable to open file.\n";
 
 	return resume;
 }
@@ -161,7 +172,7 @@ void display_main_menu() {
 	const size_t& position = resume.position;
 
 	cout << "[1] List Questions\n";
-	cout << "[2] " << (position != INVALID_POSITION ? "Resume Quiz" : "Complete Quiz") << '\n';
+	cout << "[2] " << (position != INVALID_POSITION ? "Resume Quiz" : "Complete Quiz") << newline;
 	if(indexes_size) cout << "[3] Practice (" << indexes_size << ")\n";
 	cout << "[x] Exit\n";
 }
@@ -171,7 +182,7 @@ template<typename T>
 void list_elements(const vector<T>& vec)
 // lists and numbers elements of a vector vec
 {
-	for (size_t i = 0; i < vec.size(); ++i) cout << i + 1 << ":" << vec[i] << '\n';
+	for (size_t i = 0; i < vec.size(); ++i) cout << i + 1 << list_elements_delimiter << vec[i] << newline;
 }
 
 template void list_elements<string>(const vector<string>& vec);
@@ -218,8 +229,7 @@ void create_settings_file_if(){
 
 			file.close();
 		}
-		else 
-			cerr << "Error: Unable to open file.\n";
+		else cerr << "Error: Unable to open file.\n";
 	}
 }
 
@@ -236,8 +246,7 @@ void write_elements(const vector<T>& vec, const string& file_name, ios_base::ope
 	if (file.is_open()) {
 		const size_t size = vec.size();
 
-		if (size == 0)
-			file << period;
+		if (size == 0) file << period;
 		else
 			for (size_t i = 0; i < size; ++i) {
 				file << vec[i] << ((i != size - 1) ? delimiter : period);
@@ -245,8 +254,7 @@ void write_elements(const vector<T>& vec, const string& file_name, ios_base::ope
 
 		file.close();
 	}
-	else
-		cerr << "Error: Unable to open file.\n";
+	else cerr << "Error: Unable to open file.\n";
 }
 
 // writes a single element on a file
@@ -262,8 +270,7 @@ void write_single_element(const T& t, const string& file_name, ios_base::openmod
 		file << t << period;
 		file.close();
 	}
-	else
-		cerr << "Error: Unable to open file.\n";
+	else cerr << "Error: Unable to open file.\n";
 }
 
 // updates the resume file
@@ -304,9 +311,10 @@ void review(const string& question, const string& answer, const size_t& index)
 	const vector<size_t> settings = get_settings();
 	
 	for(string choice { yes }; ; getline(cin, choice)){
-		if(choice.length() != 1) choice = INVALID_CHOICE; // the choice is invalid
+		if(choice.length() != valid_choice_length) choice = INVALID_CHOICE; // the choice is invalid
 		
-		switch(choice[0]){
+		const char& user_choice = choice[0];
+		switch(user_choice){
 		case yes:
 		{
 			// displays question
@@ -413,7 +421,7 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 
 		// displays current question position
 		size_t question_number = position + 1;
-		cout << question_number << "\\" << indexes_size << '\n';
+		cout << question_number << "\\" << indexes_size << newline;
 
 		// updates resume file
 		if (mode != Quiz::Mode::practice) {
@@ -508,7 +516,7 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 		updated_resume.retry_indexes = retry_indexes;
 		update_resume_file(updated_resume);
 
-		if (position != indexes_size - 1) cout << '\n';
+		if (position != indexes_size - 1) cout << newline;
 	}
 
 	// updates resume file
