@@ -17,7 +17,7 @@ constexpr char exit_character { 'x' };
 // constant expressions
 const size_t valid_choice_length { 1 };
 const string INVALID_CHOICE = "0";
-constexpr size_t INVALID_POSITION = numeric_limits<size_t>::max();
+constexpr size_t INVALID_POSITION = numeric_limits<unsigned int>::max();
 
 // file names
 const string questions_answers_file { "questions_answers.txt" };
