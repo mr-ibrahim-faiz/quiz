@@ -465,17 +465,10 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 						retry_indexes.push_back(index);
 						number_of_items = (size_t) count(retry_indexes.begin(), retry_indexes.end(), index);
 					}
-
-					// updates resume file
-					updated_resume.retry_indexes = retry_indexes;
-					update_resume_file(updated_resume);
 				}
 				else {
 					if (number_of_items < maximum_number_of_questions) retry_indexes.push_back(index);
 				}
-				
-				cout << "\n[Review]\n";
-				review(question, answer, index); // enables user to review failed question
 			}
 			break;
 
@@ -493,9 +486,6 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 				if (mode != Quiz::Mode::practice) {
 					if (number_of_items < maximum_number_of_questions) retry_indexes.push_back(index);
 				}
-
-				cout << "\n[Review]\n";
-				review(question, answer, index); // enables user to review failed question
 			}
 
 			case alternative_no:
@@ -509,12 +499,17 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 				continue;
 			}
 
+			// updates resume file
+			updated_resume.retry_indexes = retry_indexes;
+			update_resume_file(updated_resume);
+
+			if(user_choice == yes || user_choice == alternative_yes){
+				cout << "\n[Review]\n";
+				review(question, answer, index); // enables user to review failed question
+			}
+
 			break;
 		}
-
-		// updates resume file
-		updated_resume.retry_indexes = retry_indexes;
-		update_resume_file(updated_resume);
 
 		if (position != indexes_size - 1) cout << newline;
 	}
