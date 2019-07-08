@@ -506,6 +506,16 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 			if(user_choice == yes || user_choice == alternative_yes){
 				cout << "\n[Review]\n";
 				review(question, answer, index); // enables user to review failed question
+
+				switch(mode){
+				case Quiz::Mode::normal: case Quiz::Mode::resume:
+					cout << "\n[Quiz]\n";
+					break;
+
+				case Quiz::Mode::practice:
+					cout << "\n[Practice]\n";
+					break;
+				}
 			}
 
 			break;
