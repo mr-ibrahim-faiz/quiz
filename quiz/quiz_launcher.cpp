@@ -461,7 +461,7 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 			{
 				// adds the question index in the retry indexes
 				if (mode != Quiz::Mode::practice) {
-					while (number_of_items != maximum_number_of_questions) {
+					while (number_of_items < maximum_number_of_questions) {
 						retry_indexes.push_back(index);
 						number_of_items = (size_t) count(retry_indexes.begin(), retry_indexes.end(), index);
 					}
@@ -510,7 +510,7 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 				if (position != indexes_size - 1){
 					switch(mode){
 					case Quiz::Mode::normal: case Quiz::Mode::resume:
-						cout << "\n[Quiz]\n";
+						if(retry_indexes.size() < minimum_number_of_questions) cout << "\n[Quiz]\n";
 						break;
 
 					case Quiz::Mode::practice:
