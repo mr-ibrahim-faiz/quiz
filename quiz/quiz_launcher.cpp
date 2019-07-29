@@ -34,7 +34,7 @@ const string exit_sequence { "exit" };
 
 // constant expressions
 const size_t maximum_number_of_questions { 3 };
-const size_t minimum_number_of_questions { 15 };
+const size_t minimum_number_of_questions { 10 };
 constexpr size_t INITIAL_POSITION = 0;
 
 // file names
@@ -411,7 +411,7 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 	for (; position < indexes_size; ++position) {
 		// calls practice mode if necessary
 		if(mode != Quiz::Mode::practice){
-			if (retry_indexes.size() >= minimum_number_of_questions) {
+			if (!(retry_indexes.size() % minimum_number_of_questions) && !retry_indexes.empty()) {
 				cout << "[Practice]\n\n";
 				retry_indexes = quiz_launcher(quiz, updated_resume, Quiz::Mode::practice);
 				updated_resume.retry_indexes = retry_indexes;
@@ -510,7 +510,7 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 				if (position != indexes_size - 1){
 					switch(mode){
 					case Quiz::Mode::normal: case Quiz::Mode::resume:
-						if(retry_indexes.size() < minimum_number_of_questions) cout << "\n[Quiz]\n";
+						if((retry_indexes.size() % minimum_number_of_questions) || retry_indexes.empty()) cout << "\n[Quiz]\n";
 						break;
 
 					case Quiz::Mode::practice:
