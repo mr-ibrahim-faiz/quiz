@@ -407,14 +407,16 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 	update_resume_file(updated_resume);
 
 	size_t indexes_size = indexes.size();
+	size_t factor = retry_indexes.size() / minimum_number_of_questions + 1;
 
 	for (; position < indexes_size; ++position) {
 		// calls practice mode if necessary
 		if(mode != Quiz::Mode::practice){
-			if (!(retry_indexes.size() % minimum_number_of_questions) && !retry_indexes.empty()) {
+			if (retry_indexes.size() >= (minimum_number_of_questions*factor)) {
 				cout << "[Practice]\n\n";
 				retry_indexes = quiz_launcher(quiz, updated_resume, Quiz::Mode::practice);
 				updated_resume.retry_indexes = retry_indexes;
+				factor = retry_indexes.size() / minimum_number_of_questions + 1; // updates factor
 				cout << "\n[Quiz]\n\n";
 			}
 		}
@@ -510,7 +512,7 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 				if (position != indexes_size - 1){
 					switch(mode){
 					case Quiz::Mode::normal: case Quiz::Mode::resume:
-						if((retry_indexes.size() % minimum_number_of_questions) || retry_indexes.empty()) cout << "\n[Quiz]\n";
+						if(retry_indexes.size() < (minimum_number_of_questions*factor)) cout << "\n[Quiz]\n";
 						break;
 
 					case Quiz::Mode::practice:
