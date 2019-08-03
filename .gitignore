@@ -4,6 +4,7 @@
 /quiz/test
 
 # User-specific files
+*.exe
 *.suo
 *.user
 *.userosscache
