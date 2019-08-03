@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PROPERTIES_H
+#define PROPERTIES_H
 
 #include<map>
 using std::map;
@@ -13,3 +14,5 @@ enum class Property {
 
 // mapping string with Property
 map<const string, Property> mapping_string_property();
+
+#endif
