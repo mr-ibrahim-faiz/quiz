@@ -22,6 +22,18 @@ using std::ifstream;
 #include<algorithm>
 using std::find;
 
+#include<codecvt>
+using std::codecvt_utf8_utf16;
+
+#include<locale>
+using std::wstring_convert;
+
+#include <io.h>
+#include <fcntl.h>
+
+#include<string>
+using std::to_string;
+
 // symbolic names
 constexpr char yes { '$' };
 constexpr char no { '*' };
@@ -36,6 +48,12 @@ const string exit_sequence { "exit" };
 const size_t maximum_number_of_questions { 3 };
 const size_t minimum_number_of_questions { 10 };
 constexpr size_t INITIAL_POSITION = 0;
+
+// converts an UTF8 string to a wstring
+wstring to_wstring(const string& source){
+	wstring_convert<codecvt_utf8_utf16<wchar_t>, wchar_t> convert;
+	return convert.from_bytes(source.data());
+}
 
 // file names
 const string settings_file { "settings.txt" };
@@ -182,7 +200,11 @@ template<typename T>
 void list_elements(const vector<T>& vec)
 // lists and numbers elements of a vector vec
 {
-	for (size_t i = 0; i < vec.size(); ++i) cout << i + 1 << list_elements_delimiter << vec[i] << newline;
+	int translation_mode = _setmode(_fileno(stdout), _O_U16TEXT);
+	for (size_t i = 0; i < vec.size(); ++i){
+		wprintf(L"%d%lc%ls%lc", i + 1, int(list_elements_delimiter), to_wstring(vec[i]).data(), int(newline));
+	}
+	translation_mode = _setmode(_fileno(stdout), translation_mode);
 }
 
 template void list_elements<string>(const vector<string>& vec);
@@ -318,14 +340,19 @@ void review(const string& question, const string& answer, const size_t& index)
 		case yes:
 		{
 			// displays question
-			cout << "\033[" << settings[size_t(Property::question)] << "m\n" << question << "\033[0m\n\n";
+			int translation_mode = _setmode(_fileno(stdout), _O_U16TEXT);
+			string squestion = "\033[" + to_string(settings[size_t(Property::question)]) + "m\n" + question + "\033[0m\n\n";
+			wprintf(to_wstring(squestion).data());
+			translation_mode = _setmode(_fileno(stdout), translation_mode);
 			
 			// gets user's answer
 			get_answer();
 			
 			// displays current question's answer
 			cout << "\n[\033[" << settings[size_t(Property::answer_index)] << "m" << index << "\033[0m]\n";
-			cout << '\n' << answer << '\n';
+			translation_mode = _setmode(_fileno(stdout), translation_mode);
+			wprintf(L"\n%ls\n", to_wstring(answer).data());
+			translation_mode = _setmode(_fileno(stdout), translation_mode);
 			cout << "\033[" << settings[size_t(Property::prompt)] << "m\nTry again ?\n\033[0m";
         }
         	break;
@@ -440,14 +467,19 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 		size_t number_of_items = (size_t) count(retry_indexes.begin(), retry_indexes.end(), index);
 
 		// displays current question
-		cout << "\033[" << settings[size_t(Property::question)] << "m" << question << "\033[0m\n\n";
+		int translation_mode = _setmode(_fileno(stdout), _O_U16TEXT);
+		string squestion = "\033[" + to_string(settings[size_t(Property::question)]) + "m" + question + "\033[0m\n\n";
+		wprintf(to_wstring(squestion).data());
+		translation_mode = _setmode(_fileno(stdout), translation_mode);
 
 		// gets user's answer and checks if the user wants to exit
 		if(get_answer() == exit_sequence) return updated_resume.retry_indexes;
 
 		// displays current question's answer and index
 		cout << "\n[\033[" << settings[size_t(Property::answer_index)] << "m" << index << "\033[0m]\n";
-		cout << '\n' << answer << '\n';
+		translation_mode = _setmode(_fileno(stdout), translation_mode);
+		wprintf(L"\n%ls\n", to_wstring(answer).data());
+		translation_mode = _setmode(_fileno(stdout), translation_mode);
 
 		// checks if questions should be removed from the resume file 
 		if(mode == Quiz::Mode::practice) cout << "\033[" << settings[size_t(Property::prompt)] << "m\n" << ((number_of_items == 1)? "Last appearance !\n" : "") << "Keep in retry list ?\n\033[0m";

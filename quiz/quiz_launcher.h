@@ -10,6 +10,9 @@ using std::ios_base;
 #include<limits>
 using std::numeric_limits;
 
+#include<string>
+using std::wstring;
+
 // symbolic names
 constexpr char newline { '\n' };
 constexpr char exit_character { 'x' };
@@ -22,6 +25,9 @@ constexpr size_t INVALID_POSITION = numeric_limits<unsigned int>::max();
 // file names
 const string questions_answers_file { "questions_answers.txt" };
 const string resume_file { "resume_quiz.txt" };
+
+// converts an UTF8 string to a wstring
+wstring to_wstring(const string&);
 
 // retrieves settings information from file
 vector<size_t> get_settings();
