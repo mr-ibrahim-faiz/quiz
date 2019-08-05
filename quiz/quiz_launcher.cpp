@@ -202,7 +202,7 @@ void list_elements(const vector<T>& vec)
 {
 	int translation_mode = _setmode(_fileno(stdout), _O_U16TEXT);
 	for (size_t i = 0; i < vec.size(); ++i){
-		wprintf(L"%d%lc%ls%lc", i + 1, int(list_elements_delimiter), to_wstring(vec[i]).data(), int(newline));
+		wprintf(L"%d%lc%ls%lc", int(i + 1), int(list_elements_delimiter), to_wstring(vec[i]).data(), int(newline));
 	}
 	translation_mode = _setmode(_fileno(stdout), translation_mode);
 }
