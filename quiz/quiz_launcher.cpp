@@ -1,3 +1,5 @@
+#pragma warning(disable: 4996)
+
 #include "quiz_launcher.h"
 #include "properties.h"
 
