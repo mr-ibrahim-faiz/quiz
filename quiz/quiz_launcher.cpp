@@ -496,15 +496,7 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 			case yes:
 			{
 				// adds the question index in the retry indexes
-				if (mode != Quiz::Mode::practice) {
-					while (number_of_items < maximum_number_of_questions) {
-						retry_indexes.push_back(index);
-						number_of_items = (size_t) count(retry_indexes.begin(), retry_indexes.end(), index);
-					}
-				}
-				else {
-					if (number_of_items < maximum_number_of_questions) retry_indexes.push_back(index);
-				}
+				if (number_of_items < maximum_number_of_questions) retry_indexes.push_back(index);
 			}
 			break;
 
@@ -516,15 +508,7 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 			}
 			break;
 
-			case alternative_yes:
-			{
-				// adds the question index in the retry indexes
-				if (mode != Quiz::Mode::practice) {
-					if (number_of_items < maximum_number_of_questions) retry_indexes.push_back(index);
-				}
-			}
-
-			case alternative_no:
+			case alternative_yes: case alternative_no:
 			{
 				// does nothing
 			}
