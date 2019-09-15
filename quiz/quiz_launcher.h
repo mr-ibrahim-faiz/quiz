@@ -75,7 +75,10 @@ size_t get_position(const Resume&, const Quiz::Mode&);
 // gets indexes 
 vector<size_t> get_indexes(const Quiz&, const Resume&, const Quiz::Mode&);
 
+// checks if practice mode
+bool is_practice(const Quiz::Mode&);
+
 // simple quiz launcher
-vector<size_t> quiz_launcher(const Quiz&, const Resume&, const Quiz::Mode&);
+Resume quiz_launcher(const Quiz&, const Resume&, const Quiz::Mode&);
 
 #endif

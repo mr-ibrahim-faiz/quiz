@@ -20,7 +20,7 @@ struct Quiz {
 
 	// Modes
 	enum class Mode {
-		practice, normal, resume
+		normal, practice_normal, resume, practice_resume
 	};
 };
 
