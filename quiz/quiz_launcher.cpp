@@ -149,6 +149,8 @@ Resume get_resume_information()
 	Resume resume;
 	size_t& position = resume.position;
 	vector<size_t>& indexes = resume.indexes;
+
+	size_t& retry_position = resume.retry_position;
 	vector<size_t>& retry_indexes = resume.retry_indexes;
 
 	ifstream file;
@@ -166,6 +168,13 @@ Resume get_resume_information()
 		size_t index{ 0 };
 		while (file >> index)
 			indexes.push_back(index);
+
+		file.clear();
+		file.ignore(numeric_limits<streamsize>::max(), newline);
+
+		// retrieves current retry question position
+		if (file >> retry_position) {}
+		else retry_position = INVALID_POSITION;
 
 		file.clear();
 		file.ignore(numeric_limits<streamsize>::max(), newline);
@@ -303,6 +312,8 @@ void update_resume_file(const Resume&  resume)
 {
 	const size_t& position = resume.position;
 	const vector<size_t>& indexes = resume.indexes;
+
+	const size_t& retry_position = resume.retry_position;
 	const vector<size_t>& retry_indexes = resume.retry_indexes;
 
 	// saves the question position
@@ -310,6 +321,9 @@ void update_resume_file(const Resume&  resume)
 
 	// saves the questions order
 	write_elements(indexes, resume_file, ios_base::app, " ", " $\n");
+
+	// saves the retry question position
+	write_single_element(retry_position, resume_file, ios_base::app, " $\n");
 
 	// saves retry indexes
 	write_elements(retry_indexes, resume_file, ios_base::app, " ", " $");
@@ -382,6 +396,9 @@ size_t get_position(const Resume& resume, const Quiz::Mode& mode) {
 	case Quiz::Mode::resume:
 		return resume.position;
 
+	case Quiz::Mode::practice_resume:
+		return resume.retry_position;
+
 	default:
 		return INITIAL_POSITION;
 	}
@@ -400,17 +417,23 @@ vector<size_t> get_indexes(const Quiz& quiz, const Resume& resume, const Quiz::M
 		indexes = resume.indexes;
 		break;
 
-	case Quiz::Mode::practice:
+	case Quiz::Mode::practice_normal: case Quiz::Mode::practice_resume:
 		indexes = resume.retry_indexes;
-		shuffle_vector(indexes);
+		if(mode == Quiz::Mode::practice_normal) shuffle_vector(indexes);
 		break;
 	}
 	
 	return indexes;
 }
 
+// checks if practice mode
+bool is_practice(const Quiz::Mode& mode) {
+	if (mode == Quiz::Mode::practice_normal || mode == Quiz::Mode::practice_resume) return true;
+	else return false;
+}
+
 // quiz launcher
-vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mode)
+Resume quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mode)
 // (1) displays a question, wait for the user's answer,
 // (2) displays the right answer
 // (3) checks if the user wants to retry the question later
@@ -425,27 +448,32 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 
 	size_t position = get_position(resume, mode); // question to start with
 	const vector<size_t> indexes = get_indexes(quiz, resume, mode);
-	vector<size_t> retry_indexes = resume.retry_indexes;
+
+	size_t retry_position = resume.retry_position;
+	vector<size_t> retry_indexes = (mode == Quiz::Mode::practice_normal)? indexes : resume.retry_indexes;
 
 	// sets up resume file
-	Resume updated_resume { position, indexes, retry_indexes };
-	if (mode == Quiz::Mode::practice) {
-		updated_resume.position = get_position(resume, Quiz::Mode::resume);
-		updated_resume.indexes = get_indexes(quiz, resume, Quiz::Mode::resume);
+	Resume updated_resume { position, indexes, retry_position, retry_indexes };
+	if (is_practice(mode)) {
+		updated_resume.position = resume.position;
+		updated_resume.indexes = resume.indexes;
 	}
 	update_resume_file(updated_resume);
 
+	size_t removed_questions { 0 };
 	size_t indexes_size = indexes.size();
 	size_t factor = retry_indexes.size() / minimum_number_of_questions + 1;
 
 	for (; position < indexes_size; ++position) {
 		// calls practice mode if necessary
-		if(mode != Quiz::Mode::practice){
+		if(!is_practice(mode)){
 			if (retry_indexes.size() >= (minimum_number_of_questions*factor)) {
 				cout << "[Practice]\n\n";
-				retry_indexes = quiz_launcher(quiz, updated_resume, Quiz::Mode::practice);
-				updated_resume.retry_indexes = retry_indexes;
+				
+				updated_resume = quiz_launcher(quiz, updated_resume, (retry_position == INVALID_POSITION)? Quiz::Mode::practice_normal : Quiz::Mode::practice_resume);
+
 				factor = retry_indexes.size() / minimum_number_of_questions + 1; // updates factor
+
 				cout << "\n[Quiz]\n\n";
 			}
 		}
@@ -455,10 +483,9 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 		cout << question_number << "\\" << indexes_size << newline;
 
 		// updates resume file
-		if (mode != Quiz::Mode::practice) {
-			updated_resume.position = position;
-			update_resume_file(updated_resume);
-		}
+		if (!is_practice(mode)) { updated_resume.position = position; }
+		else { updated_resume.retry_position = position; }
+		update_resume_file(updated_resume);
 
 		// current question and answer and question's index
 		const string& question = questions[indexes[position]];
@@ -475,7 +502,13 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 		translation_mode = _setmode(_fileno(stdout), translation_mode);
 
 		// gets user's answer and checks if the user wants to exit
-		if(get_answer() == exit_sequence) return updated_resume.retry_indexes;
+		if (get_answer() == exit_sequence) {
+			if (is_practice(mode)) {
+				updated_resume.retry_position -= removed_questions;
+				update_resume_file(updated_resume);
+			}
+			return updated_resume;
+		}
 
 		// displays current question's answer and index
 		cout << "\n[\033[" << settings[size_t(Property::answer_index)] << "m" << index << "\033[0m]\n";
@@ -484,7 +517,7 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 		translation_mode = _setmode(_fileno(stdout), translation_mode);
 
 		// checks if questions should be removed from the resume file 
-		if(mode == Quiz::Mode::practice) cout << "\033[" << settings[size_t(Property::prompt)] << "m\n" << ((number_of_items == 1)? "Last appearance !\n" : "") << "Keep in retry list ?\n\033[0m";
+		if(is_practice(mode)) cout << "\033[" << settings[size_t(Property::prompt)] << "m\n" << ((number_of_items == 1)? "Last appearance !\n" : "") << "Keep in retry list ?\n\033[0m";
 		else cout << "\n\033[" << settings[size_t(Property::prompt)] << "m" << ((number_of_items == 0)? "Add to" : "Keep in") << " retry list ?\n\033[0m";
 
 		for (string choice; getline(cin, choice);) {
@@ -504,7 +537,10 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 			{
 				// removes the question index from the retry indexes if present
 				vector<size_t>::iterator it = find(retry_indexes.begin(), retry_indexes.end(), index);
-				if (it != retry_indexes.end()) retry_indexes.erase(it);
+				if (it != retry_indexes.end()) {
+					retry_indexes.erase(it);
+					if (is_practice(mode)) { ++removed_questions; }
+				}
 			}
 			break;
 
@@ -533,7 +569,7 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 						if(retry_indexes.size() < (minimum_number_of_questions*factor)) cout << "\n[Quiz]\n";
 						break;
 
-					case Quiz::Mode::practice:
+					case Quiz::Mode::practice_normal: case Quiz::Mode::practice_resume:
 						cout << "\n[Practice]\n";
 						break;
 					}
@@ -547,11 +583,10 @@ vector<size_t> quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz:
 	}
 
 	// updates resume file
-	if (mode != Quiz::Mode::practice) {
-		updated_resume.position = INVALID_POSITION;
-		updated_resume.retry_indexes = retry_indexes;
-		update_resume_file(updated_resume);
-	}
+	if (!is_practice(mode)) { updated_resume.position = INVALID_POSITION; }
+	else { updated_resume.retry_position = INVALID_POSITION; }
+	updated_resume.retry_indexes = retry_indexes;
+	update_resume_file(updated_resume);
 
-	return updated_resume.retry_indexes;
+	return updated_resume;
 }
