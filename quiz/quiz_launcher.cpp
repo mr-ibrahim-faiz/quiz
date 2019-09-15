@@ -199,10 +199,11 @@ void display_main_menu() {
 	Resume resume = get_resume_information();
 	const size_t indexes_size = resume.retry_indexes.size();
 	const size_t& position = resume.position;
+	const size_t& retry_position = resume.retry_position;
 
 	cout << "[1] List Questions\n";
-	cout << "[2] " << (position != INVALID_POSITION ? "Resume Quiz" : "Complete Quiz") << newline;
-	if(indexes_size) cout << "[3] Practice (" << indexes_size << ")\n";
+	cout << "[2] " << (position != INVALID_POSITION ? "Resume " : "") << "Quiz" << newline;
+	if(indexes_size) cout << "[3] " << ((retry_position != INVALID_POSITION)? "Resume " : "") << "Practice (" << indexes_size << ")\n";
 	cout << "[x] Exit\n";
 }
 
