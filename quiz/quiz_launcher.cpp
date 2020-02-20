@@ -207,6 +207,12 @@ void display_main_menu() {
 	cout << "[x] Exit\n";
 }
 
+// displays active mode
+void display_active_mode(const Quiz::Mode& mode) {
+	if (is_practice(mode)) cout << "[Practice]\n\n";
+	else cout << "[Quiz]\n\n";
+}
+
 // lists and numbers elements of a vector
 template<typename T>
 void list_elements(const vector<T>& vec)
@@ -338,7 +344,7 @@ string get_answer()
 	for (; getline(cin, answer, file_line_delimiter);) {
 		if (cin.peek() == newline) break;
 	}
-	getchar(); // deals with the newline
+	[[maybe_unused]] int ch = getchar(); // deals with the newline
 	return answer;
 }
 
@@ -356,6 +362,12 @@ void review(const string& question, const string& answer, const size_t& index)
 		switch(user_choice){
 		case yes:
 		{
+			// clears screen
+			[[maybe_unused]] int result = system("cls");
+
+			// displays mode
+			cout << "[Review]\n";
+
 			// displays question
 			int translation_mode = _setmode(_fileno(stdout), _O_U16TEXT);
 			string squestion = "\033[" + to_string(settings[size_t(Property::question)]) + "m\n" + question + "\033[0m\n\n";
@@ -363,7 +375,7 @@ void review(const string& question, const string& answer, const size_t& index)
 			translation_mode = _setmode(_fileno(stdout), translation_mode);
 			
 			// gets user's answer
-			get_answer();
+			[[maybe_unused]] string user_answer = get_answer();
 			
 			// displays current question's answer
 			cout << "\n[\033[" << settings[size_t(Property::answer_index)] << "m" << index << "\033[0m]\n";
@@ -434,7 +446,7 @@ bool is_practice(const Quiz::Mode& mode) {
 }
 
 // quiz launcher
-Resume quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mode)
+[[maybe_unused]] Resume quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mode)
 // (1) displays a question, wait for the user's answer,
 // (2) displays the right answer
 // (3) checks if the user wants to retry the question later
@@ -469,15 +481,20 @@ Resume quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& m
 		// calls practice mode if necessary
 		if(!is_practice(mode)){
 			if (retry_indexes.size() >= (minimum_number_of_questions*factor)) {
-				cout << "[Practice]\n\n";
+				// cout << "[Practice]\n\n";
 				
 				updated_resume = quiz_launcher(quiz, updated_resume, (retry_position == INVALID_POSITION)? Quiz::Mode::practice_normal : Quiz::Mode::practice_resume);
 
 				factor = retry_indexes.size() / minimum_number_of_questions + 1; // updates factor
-
-				cout << "\n[Quiz]\n\n";
+				// cout << "\n[Quiz]\n\n";
 			}
 		}
+
+		// clears screen
+		[[maybe_unused]] int result = system("cls");
+
+		// displays active mode
+		display_active_mode(mode);
 
 		// displays current question position
 		size_t question_number = position + 1;
@@ -561,20 +578,20 @@ Resume quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& m
 			update_resume_file(updated_resume);
 
 			if(user_choice == yes || user_choice == alternative_yes){
-				cout << "\n[Review]\n";
+				// cout << "\n[Review]\n";
 				review(question, answer, index); // enables user to review failed question
 
-				if (position != indexes_size - 1){
-					switch(mode){
-					case Quiz::Mode::normal: case Quiz::Mode::resume:
-						if(retry_indexes.size() < (minimum_number_of_questions*factor)) cout << "\n[Quiz]\n";
-						break;
+				//if (position != indexes_size - 1){
+				//	switch(mode){
+				//	case Quiz::Mode::normal: case Quiz::Mode::resume:
+				//		if(retry_indexes.size() < (minimum_number_of_questions*factor)) cout << "\n[Quiz]\n";
+				//		break;
 
-					case Quiz::Mode::practice_normal: case Quiz::Mode::practice_resume:
-						cout << "\n[Practice]\n";
-						break;
-					}
-				}
+				//	case Quiz::Mode::practice_normal: case Quiz::Mode::practice_resume:
+				//		cout << "\n[Practice]\n";
+				//		break;
+				//	}
+				//}
 			}
 
 			break;

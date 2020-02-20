@@ -41,6 +41,9 @@ Resume get_resume_information();
 // displays main menu
 void display_main_menu();
 
+// displays active mode
+void display_active_mode(const Quiz::Mode&);
+
 // lists and numbers elements of a vector
 template<typename T>
 void list_elements(const vector<T>&);
@@ -85,6 +88,6 @@ vector<size_t> get_indexes(const Quiz&, const Resume&, const Quiz::Mode&);
 bool is_practice(const Quiz::Mode&);
 
 // simple quiz launcher
-Resume quiz_launcher(const Quiz&, const Resume&, const Quiz::Mode&);
+[[maybe_unused]] Resume quiz_launcher(const Quiz&, const Resume&, const Quiz::Mode&);
 
 #endif
