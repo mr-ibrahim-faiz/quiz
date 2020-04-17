@@ -367,7 +367,10 @@ void review(const string& question, const string& answer, const size_t& index)
 
 			// displays mode
 			cout << "[Review]\n";
+		}
 
+		case alternative_yes:
+		{
 			// displays question
 			int translation_mode = _setmode(_fileno(stdout), _O_U16TEXT);
 			string squestion = "\033[" + to_string(settings[size_t(Property::question)]) + "m\n" + question + "\033[0m\n\n";

@@ -53,8 +53,8 @@ try
 
 		case '2':
 			if (!questions.empty() && questions.size() == answers.size()) {
-				if(resume.position == INVALID_POSITION) quiz_launcher(quiz, resume, Quiz::Mode::normal);
-				else quiz_launcher(quiz, resume, Quiz::Mode::resume);
+				if(resume.position == INVALID_POSITION) resume = quiz_launcher(quiz, resume, Quiz::Mode::normal);
+				else resume = quiz_launcher(quiz, resume, Quiz::Mode::resume);
 			}
 			else {
 				if(questions.empty()) cout << "There's not a single question to display.\n";
@@ -64,8 +64,8 @@ try
 
 		case '3':
 			if (!retry_indexes.empty() && questions.size() == answers.size()) {
-				if (resume.retry_position == INVALID_POSITION) quiz_launcher(quiz, resume, Quiz::Mode::practice_normal);
-				else quiz_launcher(quiz, resume, Quiz::Mode::practice_resume);
+				if (resume.retry_position == INVALID_POSITION) resume = quiz_launcher(quiz, resume, Quiz::Mode::practice_normal);
+				else resume = quiz_launcher(quiz, resume, Quiz::Mode::practice_resume);
 			}
 			else cout << "Please enter a valid choice.\n";
 			break;
