@@ -349,13 +349,13 @@ string get_answer()
 }
 
 // reviews a question
-void review(const string& question, const string& answer, const size_t& index, const char& first_choice)
+void review(const string& question, const string& answer, const size_t& index)
 // review a question an arbitrary number of times 
 {
 	// retrieves settings information from file
 	const vector<size_t> settings = get_settings();
 	
-	for(string choice { first_choice }; ; getline(cin, choice)){
+	for(string choice { alternative_yes }; ; getline(cin, choice)){
 		if(choice.length() != valid_choice_length) choice = INVALID_CHOICE; // the choice is invalid
 		
 		const char& user_choice = choice[0];
@@ -581,20 +581,7 @@ bool is_practice(const Quiz::Mode& mode) {
 			update_resume_file(updated_resume);
 
 			if(user_choice == yes || user_choice == alternative_yes){
-				// cout << "\n[Review]\n";
-				review(question, answer, index, user_choice); // enables user to review failed question
-
-				//if (position != indexes_size - 1){
-				//	switch(mode){
-				//	case Quiz::Mode::normal: case Quiz::Mode::resume:
-				//		if(retry_indexes.size() < (minimum_number_of_questions*factor)) cout << "\n[Quiz]\n";
-				//		break;
-
-				//	case Quiz::Mode::practice_normal: case Quiz::Mode::practice_resume:
-				//		cout << "\n[Practice]\n";
-				//		break;
-				//	}
-				//}
+				review(question, answer, index); // enables user to review failed question
 			}
 
 			break;
