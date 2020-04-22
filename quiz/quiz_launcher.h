@@ -65,8 +65,14 @@ void write_elements(const vector<T>&, const string&, ios_base::openmode, const s
 template<typename T>
 void write_single_element(const T&, const string&, ios_base::openmode, const string&);
 
-// sets up resume file
+// updates the resume data
+Resume update_resume(const Resume&, const Quiz&);
+
+// updates the resume file
 void update_resume_file(const Resume&);
+
+// updates the questions answers file
+void update_questions_answers_file();
 
 // gets user's answer
 string get_answer();

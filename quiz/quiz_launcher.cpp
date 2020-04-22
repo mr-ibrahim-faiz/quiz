@@ -9,6 +9,7 @@ using std::cout;
 using std::cerr;
 using std::ws;
 using std::streamsize;
+using std::pair;
 
 #include<random>
 using std::random_device;
@@ -45,6 +46,7 @@ constexpr char list_elements_delimiter { ':' };
 constexpr char file_line_delimiter { '$' };
 
 const string exit_sequence { "exit" };
+const string empty_line { "$" };
 
 // constant expressions
 const size_t maximum_number_of_questions { 3 };
@@ -59,6 +61,7 @@ wstring to_wstring(const string& source){
 
 // file names
 const string settings_file { "settings.txt" };
+const string temporary_file{ "questions_answers_temp.txt" };
 
 // retrieves settings information from file
 vector<size_t> get_settings()
@@ -119,20 +122,23 @@ Quiz get_questions_and_answers()
 
 	vector<string>& questions = quiz.questions;
 	vector<string>& answers = quiz.answers;
+	vector<size_t>& removed = quiz.removed;
 
 	ifstream file;
 
 	file.open(questions_answers_file);
 	if (file.is_open()) {
+		for (pair<string,size_t> line_and_index; getline(file, line_and_index.first, file_line_delimiter); ++line_and_index.second) {
+			string& line = line_and_index.first;
+			size_t& index = line_and_index.second;
 
-		for (string line; getline(file, line, file_line_delimiter);) {
-			if(!line.empty()) questions.push_back(line);
-			file.ignore(1, newline);
+			if (!line.empty()) questions.push_back(line);
+			else removed.insert(removed.begin(), index); // an empty line question is considered "removed" by the program
+			file >> ws;
 
 			line.clear();
 			getline(file, line, file_line_delimiter);
-			if(!line.empty()) answers.push_back(line);
-
+			if(!line.empty()) answers.push_back(line); // an empty line answer is considered "removed" by the program
 			file >> ws;
 		}
 		file.close();
@@ -313,6 +319,61 @@ void write_single_element(const T& t, const string& file_name, ios_base::openmod
 	else cerr << "Error: Unable to open file.\n";
 }
 
+// updates the resume data
+Resume update_resume(const Resume& resume, const Quiz& quiz)
+{
+	Resume updated_resume;
+	updated_resume.position = resume.position;
+	updated_resume.retry_position = resume.retry_position;
+
+	vector<size_t> indexes = resume.indexes;
+	vector<size_t> retry_indexes = resume.retry_indexes;
+
+	const vector<size_t>& removed = quiz.removed;
+
+	// removes empty questions and answers
+	for (size_t i { 0 }; i < removed.size(); ++i) {
+		const size_t& removed_index = removed[i];
+
+		vector<size_t> updated_indexes;
+		for (size_t j { 0 }; j < indexes.size(); ++j) {
+			const size_t& index = indexes[j];
+
+			if (index != removed_index) {
+				updated_indexes.push_back((index > removed_index) ? index - 1 : index);
+			}
+		}
+		indexes = updated_indexes;
+
+		vector<size_t> updated_retry_indexes;
+		for (size_t j { 0 }; j < retry_indexes.size(); ++j) {
+			const size_t& index = retry_indexes[j];
+
+			if (index != removed_index) {
+				updated_retry_indexes.push_back((index > removed_index) ? index - 1 : index);
+			}
+		}
+		retry_indexes = updated_retry_indexes;
+	}
+
+	// adds newly added questions
+	const size_t questions_size = quiz.questions.size();
+	const size_t indexes_size = indexes.size();
+
+	if (!indexes.empty() && (questions_size > indexes_size)) {
+		const size_t new_questions = questions_size - indexes_size;
+		for (size_t i { 0 }; i < new_questions; ++i) {
+			indexes.push_back(indexes_size + i);
+			retry_indexes.push_back(indexes_size + i);
+		}
+	}
+
+	updated_resume.indexes = indexes;
+	updated_resume.retry_indexes = retry_indexes;
+
+	return updated_resume;
+}
+
 // updates the resume file
 void update_resume_file(const Resume&  resume) 
 // saves the question position, the questions order and retry indexes on the resume file
@@ -334,6 +395,33 @@ void update_resume_file(const Resume&  resume)
 
 	// saves retry indexes
 	write_elements(retry_indexes, resume_file, ios_base::app, " ", " $");
+}
+
+// updates the questions answers file
+void update_questions_answers_file()
+// removes empty questions and answers from file
+{
+	fstream source(questions_answers_file, ios_base::in | ios_base::binary);
+
+	if(source.is_open()) {
+		fstream destination(temporary_file, ios_base::out | ios_base::binary);
+
+		if (destination.is_open()) {
+			for (string line; getline(source, line);) {
+				if (line != empty_line) {
+					destination << line << newline;
+				}
+				else source >> ws;
+			}
+			destination.close();
+		}
+		else cerr << "Error: Unable to open file.\n";
+		source.close();
+	}
+	else cerr << "Error: Unable to open file.\n";
+
+	remove(questions_answers_file.c_str());
+	rename(temporary_file.c_str(), questions_answers_file.c_str());
 }
 
 // gets user's answer
