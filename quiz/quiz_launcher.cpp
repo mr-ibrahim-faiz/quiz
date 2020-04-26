@@ -573,7 +573,7 @@ bool is_practice(const Quiz::Mode& mode) {
 		if(!is_practice(mode)){
 			if (retry_indexes.size() >= (minimum_number_of_questions*factor)) {
 				// cout << "[Practice]\n\n";
-				
+
 				updated_resume = quiz_launcher(quiz, updated_resume, (retry_position == INVALID_POSITION)? Quiz::Mode::practice_normal : Quiz::Mode::practice_resume);
 
 				factor = retry_indexes.size() / minimum_number_of_questions + 1; // updates factor
