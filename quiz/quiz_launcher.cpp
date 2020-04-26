@@ -61,7 +61,7 @@ wstring to_wstring(const string& source){
 
 // file names
 const string settings_file { "settings.txt" };
-const string temporary_file{ "questions_answers_temp.txt" };
+const string temporary_file { "questions_answers_temp.txt" };
 
 // retrieves settings information from file
 vector<size_t> get_settings()
