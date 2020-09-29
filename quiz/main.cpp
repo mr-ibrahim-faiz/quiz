@@ -18,14 +18,16 @@ try
 
 	// retrieves quiz information from file
 	Quiz quiz = get_questions_and_answers();
+	if (!quiz.removed.empty()) update_questions_answers_file();
 	const vector<string>& questions = quiz.questions;
 	const vector<string>& answers = quiz.answers;
 
 	// retrieves resume information from file
 	Resume resume = get_resume_information();
+	resume = update_resume(resume, quiz);
 	const vector<size_t>& retry_indexes = resume.retry_indexes;
 	
-	// updates resume file
+	// sets up resume file
 	update_resume_file(resume);
 
 	// display main menu
@@ -37,9 +39,11 @@ try
 		else {
 			// retrieves quiz information from file
 			quiz = get_questions_and_answers();
+			if (!quiz.removed.empty()) update_questions_answers_file();
 
 			// retrieves resume information from file
 			resume = get_resume_information();
+			resume = update_resume(resume, quiz);
 		}
 		
 		const char& user_choice = choice[0];	
@@ -53,8 +57,8 @@ try
 
 		case '2':
 			if (!questions.empty() && questions.size() == answers.size()) {
-				if(resume.position == INVALID_POSITION) quiz_launcher(quiz, resume, Quiz::Mode::normal);
-				else quiz_launcher(quiz, resume, Quiz::Mode::resume);
+				if(resume.position == INVALID_POSITION) resume = quiz_launcher(quiz, resume, Quiz::Mode::normal);
+				else resume = quiz_launcher(quiz, resume, Quiz::Mode::resume);
 			}
 			else {
 				if(questions.empty()) cout << "There's not a single question to display.\n";
@@ -64,8 +68,8 @@ try
 
 		case '3':
 			if (!retry_indexes.empty() && questions.size() == answers.size()) {
-				if (resume.retry_position == INVALID_POSITION) quiz_launcher(quiz, resume, Quiz::Mode::practice_normal);
-				else quiz_launcher(quiz, resume, Quiz::Mode::practice_resume);
+				if (resume.retry_position == INVALID_POSITION) resume = quiz_launcher(quiz, resume, Quiz::Mode::practice_normal);
+				else resume = quiz_launcher(quiz, resume, Quiz::Mode::practice_resume);
 			}
 			else cout << "Please enter a valid choice.\n";
 			break;
