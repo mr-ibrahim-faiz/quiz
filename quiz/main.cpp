@@ -84,7 +84,11 @@ try
 
 		if (user_choice == exit_character) break;
 		else {
-			cout << newline;
+			// clears screen
+			if(user_choice == '1')
+				cout << newline;
+			else
+				[[maybe_unused]] int result = system("clear");
 			display_main_menu();
 		}
 	}

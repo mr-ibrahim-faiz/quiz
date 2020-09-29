@@ -35,6 +35,9 @@ Resume get_resume_information();
 // displays main menu
 void display_main_menu();
 
+// displays active mode
+void display_active_mode(const Quiz::Mode&);
+
 // lists and numbers elements of a vector
 template<typename T>
 void list_elements(const vector<T>&);
@@ -56,8 +59,14 @@ void write_elements(const vector<T>&, const string&, ios_base::openmode, const s
 template<typename T>
 void write_single_element(const T&, const string&, ios_base::openmode, const string&);
 
-// sets up resume file
+// updates the resume data
+Resume update_resume(const Resume&, const Quiz&);
+
+// updates the resume file
 void update_resume_file(const Resume&);
+
+// updates the questions answers file
+void update_questions_answers_file();
 
 // gets user's answer
 string get_answer();
@@ -79,6 +88,6 @@ vector<size_t> get_indexes(const Quiz&, const Resume&, const Quiz::Mode&);
 bool is_practice(const Quiz::Mode&);
 
 // simple quiz launcher
-Resume quiz_launcher(const Quiz&, const Resume&, const Quiz::Mode&);
+[[maybe_unused]] Resume quiz_launcher(const Quiz&, const Resume&, const Quiz::Mode&);
 
 #endif

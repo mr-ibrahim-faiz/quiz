@@ -18,6 +18,9 @@ struct Quiz {
 	vector<string> questions;
 	vector<string> answers;
 
+	// removed questions and answers
+	vector<size_t> removed;
+
 	// Modes
 	enum class Mode {
 		normal, practice_normal, resume, practice_resume
