@@ -155,6 +155,9 @@ Quiz get_questions_and_answers()
 Resume get_resume_information()
 // retrieves current question position, questions order indexes and retry indexes from resume file
 {
+	// sets up resume file
+	create_file_if(resume_file);
+
 	Resume resume;
 	size_t& position = resume.position;
 	vector<size_t>& indexes = resume.indexes;
@@ -197,7 +200,7 @@ Resume get_resume_information()
 
 		file.close();
 	}
-	else create_file_if(resume_file);
+	else cerr << "Error: Unable to open resume file.\n";
 
 	return resume;
 }
@@ -304,6 +307,27 @@ void create_settings_file_if(){
 			file << "question\t0\n";
 			file << "answer_index\t0\n";
 			file << "prompt\t0\n";
+
+			file.close();
+		}
+		else cerr << "Error: Unable to open file.\n";
+	}
+}
+
+// creates statistics file if it doesn't exist
+void create_statistics_file_if(const Quiz& quiz){
+	fstream file;
+	file.open(statistics_file, ios_base::in);
+
+	if (file.is_open()) file.close();
+	else {
+		file.open(statistics_file, ios_base::out);
+
+		if(file.is_open()) {
+			const size_t questions_size = quiz.questions.size();
+
+			for(size_t i = 0; i < questions_size; ++i)
+				file << "0:0\n";
 
 			file.close();
 		}
@@ -577,6 +601,9 @@ bool is_practice(const Quiz::Mode& mode) {
 {
 	// sets up setting file
 	create_settings_file_if();
+
+	// sets up statistics file
+	create_statistics_file_if(quiz);
 
 	// retrieves settings information from file
 	const vector<size_t> settings = get_settings();

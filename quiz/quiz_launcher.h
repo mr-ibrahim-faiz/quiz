@@ -57,6 +57,9 @@ void create_file_if(const string&);
 // creates settings file if it doesn't exist
 void create_settings_file_if();
 
+// creates statistics file if it doesn't exist
+void create_statistics_file_if(const Quiz&);
+
 // writes elements of a vector on a file
 template<typename T>
 void write_elements(const vector<T>&, const string&, ios_base::openmode, const string&, const string&);

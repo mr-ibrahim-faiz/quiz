@@ -21,7 +21,7 @@ try
 	Resume resume = get_resume_information();
 	resume = update_resume(resume, quiz);
 	const vector<size_t>& retry_indexes = resume.retry_indexes;
-	
+
 	// sets up resume file
 	update_resume_file(resume);
 
