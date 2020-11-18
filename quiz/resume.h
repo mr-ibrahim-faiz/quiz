@@ -8,10 +8,10 @@ using std::vector;
 struct Resume {
 	// default constructor
 	Resume() noexcept
-		: position{}
-		, indexes{}
-		, retry_position{}
-		, retry_indexes{}{}
+		: position {}
+		, indexes {}
+		, retry_position {}
+		, retry_indexes {}{}
 	
 	// constructor taking position, indexes and retry_indexes as arguments
 	explicit Resume(const size_t& position, const vector<size_t>& indexes, const size_t& retry_position, const vector<size_t>& retry_indexes) noexcept

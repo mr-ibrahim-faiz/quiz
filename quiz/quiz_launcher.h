@@ -3,6 +3,7 @@
 
 #include "quiz.h"
 #include "resume.h"
+#include "statistics.h"
 
 #include<iostream>
 using std::ios_base;
