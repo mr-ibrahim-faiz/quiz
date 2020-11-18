@@ -25,6 +25,7 @@ constexpr size_t INVALID_POSITION = numeric_limits<unsigned int>::max();
 // file names
 const string questions_answers_file { "questions_answers.txt" };
 const string resume_file { "resume_quiz.txt" };
+const string statistics_file { "statistics.txt" };
 
 // converts an UTF8 string to a wstring
 wstring to_wstring(const string&);

@@ -14,6 +14,7 @@ try
 	// creates required files
 	create_file_if(questions_answers_file);
 	create_file_if(resume_file);
+	create_file_if(statistics_file);
 	create_settings_file_if();
 
 	// retrieves quiz information from file
@@ -84,11 +85,7 @@ try
 
 		if (user_choice == exit_character) break;
 		else {
-			// clears screen
-			if(user_choice == '1')
-				cout << newline;
-			else
-				[[maybe_unused]] int result = system("cls");
+			cout << newline;
 			display_main_menu();
 		}
 	}
