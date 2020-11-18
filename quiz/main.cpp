@@ -11,12 +11,6 @@ using std::exception;
 int main()
 try
 {
-	// creates required files
-	create_file_if(questions_answers_file);
-	create_file_if(resume_file);
-	create_file_if(statistics_file);
-	create_settings_file_if();
-
 	// retrieves quiz information from file
 	Quiz quiz = get_questions_and_answers();
 	if (!quiz.removed.empty()) update_questions_answers_file();
