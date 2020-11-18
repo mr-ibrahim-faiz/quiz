@@ -37,6 +37,9 @@ using std::wstring_convert;
 #include<string>
 using std::to_string;
 
+#include<stdexcept>
+using std::runtime_error;
+
 // symbolic names
 constexpr char yes { '$' };
 constexpr char no { '*' };
@@ -319,12 +322,19 @@ void create_statistics_file_if(const Quiz& quiz){
 	fstream file;
 	file.open(statistics_file, ios_base::in);
 
-	if (file.is_open()) file.close();
+	const size_t questions_size = quiz.questions.size();
+
+	if (file.is_open()) {
+		Statistics statistics = get_statistics_information();
+		const size_t statistics_size = statistics.successes.size();
+		if(questions_size != statistics_size)
+			throw runtime_error("The statistics file is corrupted.");
+		file.close();
+	}
 	else {
 		file.open(statistics_file, ios_base::out);
 
 		if(file.is_open()) {
-			const size_t questions_size = quiz.questions.size();
 
 			for(size_t i = 0; i < questions_size; ++i)
 				file << "0:0\n";
