@@ -113,7 +113,7 @@ vector<size_t> get_settings()
 	return result;
 }
 
-// retrieves quiz information from files
+// retrieves quiz information from file
 Quiz get_questions_and_answers()
 // retrieves questions and answers from the questions_answers file
 // the file is created if it doesn't exist
@@ -148,7 +148,7 @@ Quiz get_questions_and_answers()
 	return quiz;
 }
 
-// gets resume file information
+// retrieves resume information from file
 Resume get_resume_information()
 // retrieves current question position, questions order indexes and retry indexes from resume file
 {
@@ -197,6 +197,12 @@ Resume get_resume_information()
 	else cerr << "Error: Unable to open file.\n";
 
 	return resume;
+}
+
+// retrieves statistics information from file
+Statistics get_statistics_information()
+// retrieves statistics information from the statistics file, including the number of times a question was well answered.
+{
 }
 
 // displays main menu

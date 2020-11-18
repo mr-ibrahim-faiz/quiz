@@ -33,11 +33,14 @@ wstring to_wstring(const string&);
 // retrieves settings information from file
 vector<size_t> get_settings();
 
-// retrieves quiz information from files
+// retrieves quiz information from file
 Quiz get_questions_and_answers();
 
-// gets resume file information
+// retrieves resume information from file
 Resume get_resume_information();
+
+// retrieves statistics information from file
+Statistics get_statistics_information();
 
 // displays main menu
 void display_main_menu();
