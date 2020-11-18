@@ -304,9 +304,9 @@ void create_settings_file_if(){
 		file.open(settings_file, ios_base::out);
 
 		if(file.is_open()) {
-			file << "question\t0\n";
-			file << "answer_index\t0\n";
-			file << "prompt\t0\n";
+			file << "question\t33\n";
+			file << "answer_index\t33\n";
+			file << "prompt\t90\n";
 
 			file.close();
 		}
