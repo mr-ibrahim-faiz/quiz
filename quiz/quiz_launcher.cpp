@@ -143,7 +143,7 @@ Quiz get_questions_and_answers()
 		}
 		file.close();
 	}
-	else create_file_if(questions_answers_file);
+	else cerr << "Error: Unable to open file.\n";
 
 	return quiz;
 }
@@ -203,6 +203,29 @@ Resume get_resume_information()
 Statistics get_statistics_information()
 // retrieves statistics information from the statistics file, including the number of times a question was well answered.
 {
+	Statistics statistics;
+	vector<size_t>& successes = statistics.successes;
+	vector<size_t>& failures = statistics.failures;
+
+	ifstream file;
+	file.open(statistics_file);
+
+	if (file.is_open()){
+		// retrieves number of times questions were well answered
+		size_t number { 0 };
+
+		while(file >> number){
+			successes.push_back(number);
+			file.ignore(1);
+			file >> number;
+			failures.push_back(number);
+		}
+
+		file.close();
+	}
+	else cerr << "Error: Unable to open file.\n";
+
+	return statistics;
 }
 
 // displays main menu
