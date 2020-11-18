@@ -5,12 +5,12 @@
 
 # User-specific files
 *.exe
+*.txt
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
 quiz/quiz
-quiz/resume_quiz.txt
 *.sln
 *.vcxproj
 *.vcxproj.filters
