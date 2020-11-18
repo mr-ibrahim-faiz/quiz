@@ -60,6 +60,9 @@ wstring to_wstring(const string& source){
 }
 
 // file names
+const string questions_answers_file { "questions_answers.txt" };
+const string resume_file { "resume_quiz.txt" };
+const string statistics_file { "statistics.txt" };
 const string settings_file { "settings.txt" };
 const string temporary_file { "questions_answers_temp.txt" };
 
@@ -143,7 +146,7 @@ Quiz get_questions_and_answers()
 		}
 		file.close();
 	}
-	else cerr << "Error: Unable to open file.\n";
+	else create_file_if(questions_answers_file);
 
 	return quiz;
 }
@@ -194,7 +197,7 @@ Resume get_resume_information()
 
 		file.close();
 	}
-	else cerr << "Error: Unable to open file.\n";
+	else create_file_if(resume_file);
 
 	return resume;
 }
@@ -223,7 +226,7 @@ Statistics get_statistics_information()
 
 		file.close();
 	}
-	else cerr << "Error: Unable to open file.\n";
+	else create_file_if(statistics_file);
 
 	return statistics;
 }
@@ -572,6 +575,9 @@ bool is_practice(const Quiz::Mode& mode) {
 // (3) checks if the user wants to retry the question later
 // (4) returns the indexes of questions we want to try later
 {
+	// sets up setting file
+	create_settings_file_if();
+
 	// retrieves settings information from file
 	const vector<size_t> settings = get_settings();
 
