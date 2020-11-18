@@ -42,7 +42,9 @@ try
 		}
 		
 		const char& user_choice = choice[0];	
-		cout << newline;
+
+		// clears screen
+		[[maybe_unused]] int result = system("cls");
 
 		switch (user_choice) {
 		case '1':
