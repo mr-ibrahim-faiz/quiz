@@ -678,10 +678,6 @@ bool is_practice(const Quiz::Mode& mode) {
 				updated_resume.retry_position -= removed_questions;
 				update_resume_file(updated_resume);
 			}
-
-			// clears screen
-			[[maybe_unused]] int result = system("cls");
-
 			return updated_resume;
 		}
 
@@ -749,9 +745,6 @@ bool is_practice(const Quiz::Mode& mode) {
 	else { updated_resume.retry_position = INVALID_POSITION; }
 	updated_resume.retry_indexes = retry_indexes;
 	update_resume_file(updated_resume);
-
-	// clears screen
-	[[maybe_unused]] int result = system("cls");
 
 	return updated_resume;
 }
