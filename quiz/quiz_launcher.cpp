@@ -425,8 +425,8 @@ Statistics update_statistics(const Statistics& statistics, const Quiz& quiz){
 	// removes empty questions and answers
 	for (size_t i { 0 }; i < removed.size(); ++i) {
 		const size_t& removed_index = removed[i];
-		successes.erase(successes.begin() + removed_index);
-		failures.erase(failures.begin() + removed_index);
+		successes.erase(successes.begin() + (int) removed_index);
+		failures.erase(failures.begin() + (int) removed_index);
 	}
 
 	// adds newly added questions
@@ -710,7 +710,7 @@ void initialize_quiz()
 			}
 
 			// clears screen
-			[[maybe_unused]] int result = system(clear_command.c_str());
+			[[maybe_unused]] int result_clear = system(clear_command.c_str());
 
 			return updated_resume;
 		}
