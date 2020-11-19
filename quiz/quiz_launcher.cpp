@@ -52,6 +52,7 @@ const string exit_sequence { "exit" };
 const string empty_line { "$" };
 
 // constant expressions
+const int success_threshold { 10 };
 const size_t maximum_number_of_questions { 3 };
 const size_t minimum_number_of_questions { 10 };
 constexpr size_t INITIAL_POSITION = 0;
@@ -636,6 +637,14 @@ void initialize_quiz()
 	size_t retry_position = resume.retry_position;
 	vector<size_t> retry_indexes = (mode == Quiz::Mode::practice_normal)? indexes : resume.retry_indexes;
 
+	// retrieves the statistics information
+	Statistics statistics = get_statistics_information();
+	statistics = update_statistics(statistics, quiz);
+	update_statistics_file(statistics);
+
+	vector<size_t>& successes = statistics.successes;
+	vector<size_t>& failures = statistics.failures;
+
 	// sets up resume file
 	Resume updated_resume { position, indexes, retry_position, retry_indexes };
 	if (is_practice(mode)) {
@@ -685,8 +694,11 @@ void initialize_quiz()
 		size_t number_of_items = (size_t) count(retry_indexes.begin(), retry_indexes.end(), index);
 
 		// displays current question
+		// the question is marked with an asterisk if it was well answered a certain nubmer of times
+		const int success = (int) successes[index];
+		const int failure = (int) failures[index];
 		int translation_mode = _setmode(_fileno(stdout), _O_U16TEXT);
-		string squestion = "\033[" + to_string(settings[size_t(Property::question)]) + "m" + question + "\033[0m\n\n";
+		string squestion = "\033[" + to_string(settings[size_t(Property::question)]) + "m" + question + ((success - failure > success_threshold)? "*" : "") + "\033[0m\n\n";
 		wprintf(L"%ls", to_wstring(squestion).data());
 		translation_mode = _setmode(_fileno(stdout), translation_mode);
 
@@ -723,6 +735,7 @@ void initialize_quiz()
 			{
 				// adds the question index in the retry indexes
 				if (number_of_items < maximum_number_of_questions) retry_indexes.push_back(index);
+				failures[index] = failures[index] + 1;
 			}
 			break;
 
@@ -734,6 +747,7 @@ void initialize_quiz()
 					retry_indexes.erase(it);
 					if (is_practice(mode)) { ++removed_questions; }
 				}
+				successes[index] = successes[index] + 1;
 			}
 			break;
 
@@ -751,6 +765,10 @@ void initialize_quiz()
 			// updates resume file
 			updated_resume.retry_indexes = retry_indexes;
 			update_resume_file(updated_resume);
+
+			// updates statistics file
+			statistics = update_statistics(statistics, quiz);
+			update_statistics_file(statistics);
 
 			if(user_choice == yes || user_choice == alternative_yes){
 				review(question, answer, index); // enables user to review failed question
