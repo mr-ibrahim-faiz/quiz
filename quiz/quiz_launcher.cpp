@@ -72,10 +72,7 @@ const string temporary_file { "questions_answers_temp.txt" };
 // retrieves settings information from file
 vector<size_t> get_settings()
 // retrieves settings information from the settings file
-// the file is created if it doesn't exist
 {
-	create_settings_file_if();
-
 	ifstream file;
 	file.open(settings_file);
 
@@ -94,27 +91,12 @@ vector<size_t> get_settings()
 			if(file) {
 				Property eproperty = properties[sproperty];
 				if(properties.size() == number_of_properties) result[size_t(eproperty)] = value;
-				else 
-					properties.erase(sproperty);
+				else properties.erase(sproperty);
 			}
-			else {
-				cerr << "Error: settings file is corrupted !\n";
-				cout << "Resetting... ";
-
-				file.clear();
-				if(file.is_open()) file.close();
-
-				remove(settings_file.c_str());
-				create_settings_file_if();
-
-				result.clear();
-				result = get_settings();
-
-				cout << "Done...\n\n";
-			}
+			else cerr << "Error: settings file is corrupted !\n";
 		}
 	}
-	else cerr << "Error: Unable to open file.\n";
+	else cerr << "Error: Unable to open settings file.\n";
 
 	return result;
 }
@@ -122,7 +104,6 @@ vector<size_t> get_settings()
 // retrieves quiz information from file
 Quiz get_questions_and_answers()
 // retrieves questions and answers from the questions_answers file
-// the file is created if it doesn't exist
 {
 	Quiz quiz;
 
@@ -149,7 +130,7 @@ Quiz get_questions_and_answers()
 		}
 		file.close();
 	}
-	else create_file_if(questions_answers_file);
+	else cerr << "Error: Unable to open questions and answers file.\n";
 
 	return quiz;
 }
@@ -158,9 +139,6 @@ Quiz get_questions_and_answers()
 Resume get_resume_information()
 // retrieves current question position, questions order indexes and retry indexes from resume file
 {
-	// sets up resume file
-	create_file_if(resume_file);
-
 	Resume resume;
 	size_t& position = resume.position;
 	vector<size_t>& indexes = resume.indexes;
@@ -232,7 +210,7 @@ Statistics get_statistics_information()
 
 		file.close();
 	}
-	else create_file_if(statistics_file);
+	else cerr << "Error: Unable to open statistics file.\n";
 
 	return statistics;
 }
@@ -310,34 +288,6 @@ void create_settings_file_if(){
 			file << "question\t33\n";
 			file << "answer_index\t33\n";
 			file << "prompt\t90\n";
-
-			file.close();
-		}
-		else cerr << "Error: Unable to open file.\n";
-	}
-}
-
-// creates statistics file if it doesn't exist
-void create_statistics_file_if(const Quiz& quiz){
-	fstream file;
-	file.open(statistics_file, ios_base::in);
-
-	const size_t questions_size = quiz.questions.size();
-
-	if (file.is_open()) {
-		Statistics statistics = get_statistics_information();
-		const size_t statistics_size = statistics.successes.size();
-		if(questions_size != statistics_size)
-			throw runtime_error("The statistics file is corrupted.");
-		file.close();
-	}
-	else {
-		file.open(statistics_file, ios_base::out);
-
-		if(file.is_open()) {
-
-			for(size_t i = 0; i < questions_size; ++i)
-				file << "0:0\n";
 
 			file.close();
 		}
@@ -463,6 +413,60 @@ void update_resume_file(const Resume&  resume)
 	write_elements(retry_indexes, resume_file, ios_base::app, " ", " $");
 }
 
+// updates the statistics data
+Statistics update_statistics(const Statistics& statistics, const Quiz& quiz){
+	Statistics updated_statistics;
+	vector<size_t> successes = statistics.successes;
+	vector<size_t> failures = statistics.failures;
+
+	const vector<size_t>& removed = quiz.removed;
+
+	// removes empty questions and answers
+	for (size_t i { 0 }; i < removed.size(); ++i) {
+		const size_t& removed_index = removed[i];
+		successes.erase(successes.begin() + removed_index);
+		failures.erase(failures.begin() + removed_index);
+	}
+
+	// adds newly added questions
+	const size_t questions_size = quiz.questions.size();
+	const size_t successes_size = successes.size();
+
+	if (questions_size > successes_size) {
+		const size_t new_questions = questions_size - successes_size;
+		for (size_t i { 0 }; i < new_questions; ++i) {
+			successes.push_back(0);
+			failures.push_back(0);
+		}
+	}
+
+	updated_statistics.successes = successes;
+	updated_statistics.failures = failures;
+
+	// checks the statistics data
+	if(failures.size() != successes.size()) throw runtime_error("(statistics) size mismatch.");
+
+	return updated_statistics;
+}
+
+// updates the statistics file
+void update_statistics_file(const Statistics& statistics){
+	const vector<size_t>& successes = statistics.successes;
+	const vector<size_t>& failures = statistics.failures;
+
+	if(successes.size() != failures.size()) throw runtime_error("(statistics) corrupted data.");
+
+	fstream file;
+	file.open(statistics_file, ios_base::out);
+
+	if(file.is_open()){
+		for(size_t i { 0 }; i < successes.size(); ++i)
+			file << successes[i] << list_elements_delimiter << failures[i] << newline;
+		file.close();
+	}
+	else cerr << "Error: Unable to open statistics file.\n";
+}
+
 // updates the questions answers file
 void update_questions_answers_file()
 // removes empty questions and answers from file
@@ -481,10 +485,10 @@ void update_questions_answers_file()
 			}
 			destination.close();
 		}
-		else cerr << "Error: Unable to open file.\n";
+		else cerr << "Error: Unable to open destination file.\n";
 		source.close();
 	}
-	else cerr << "Error: Unable to open file.\n";
+	else cerr << "Error: Unable to open source file.\n";
 
 	remove(questions_answers_file.c_str());
 	rename(temporary_file.c_str(), questions_answers_file.c_str());
@@ -517,7 +521,7 @@ void review(const string& question, const string& answer, const size_t& index)
 		case yes:
 		{
 			// clears screen
-			[[maybe_unused]] int result = system("cls");
+			[[maybe_unused]] int result = system(clear_command.c_str());
 
 			// displays mode
 			cout << "[Review]\n";
@@ -602,6 +606,16 @@ bool is_practice(const Quiz::Mode& mode) {
 	else return false;
 }
 
+// initializes the quiz environment
+void initialize_quiz()
+// creates the required files including questions and answers file, resume file, and statistics file
+{
+	create_settings_file_if();
+	create_file_if(questions_answers_file);
+	create_file_if(resume_file);
+	create_file_if(statistics_file);
+}
+
 // quiz launcher
 [[maybe_unused]] Resume quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mode)
 // (1) displays a question, wait for the user's answer,
@@ -609,12 +623,6 @@ bool is_practice(const Quiz::Mode& mode) {
 // (3) checks if the user wants to retry the question later
 // (4) returns the indexes of questions we want to try later
 {
-	// sets up setting file
-	create_settings_file_if();
-
-	// sets up statistics file
-	create_statistics_file_if(quiz);
-
 	// retrieves settings information from file
 	const vector<size_t> settings = get_settings();
 
@@ -654,7 +662,7 @@ bool is_practice(const Quiz::Mode& mode) {
 		}
 
 		// clears screen
-		[[maybe_unused]] int result = system("cls");
+		[[maybe_unused]] int result = system(clear_command.c_str());
 
 		// displays active mode
 		display_active_mode(mode);
@@ -688,6 +696,10 @@ bool is_practice(const Quiz::Mode& mode) {
 				updated_resume.retry_position -= removed_questions;
 				update_resume_file(updated_resume);
 			}
+
+			// clears screen
+			[[maybe_unused]] int result = system(clear_command.c_str());
+
 			return updated_resume;
 		}
 
@@ -755,6 +767,9 @@ bool is_practice(const Quiz::Mode& mode) {
 	else { updated_resume.retry_position = INVALID_POSITION; }
 	updated_resume.retry_indexes = retry_indexes;
 	update_resume_file(updated_resume);
+
+	// clears screen
+	[[maybe_unused]] int result = system(clear_command.c_str());
 
 	return updated_resume;
 }

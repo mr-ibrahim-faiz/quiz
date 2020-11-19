@@ -4,13 +4,19 @@
 #include<vector>
 using std::vector;
 
+#include<limits>
+using std::numeric_limits;
+
+// constant expressions
+constexpr size_t INVALID_POSITION = numeric_limits<unsigned int>::max();
+
 // user-defined type Resume
 struct Resume {
 	// default constructor
 	Resume() noexcept
-		: position {}
+		: position { INVALID_POSITION }
 		, indexes {}
-		, retry_position {}
+		, retry_position { INVALID_POSITION }
 		, retry_indexes {}{}
 	
 	// constructor taking position, indexes and retry_indexes as arguments

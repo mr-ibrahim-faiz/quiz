@@ -8,9 +8,6 @@
 #include<iostream>
 using std::ios_base;
 
-#include<limits>
-using std::numeric_limits;
-
 #include<string>
 using std::wstring;
 
@@ -18,10 +15,11 @@ using std::wstring;
 constexpr char newline { '\n' };
 constexpr char exit_character { 'x' };
 
+const string clear_command { "cls" };
+
 // constant expressions
 const size_t valid_choice_length { 1 };
 const string INVALID_CHOICE = "0";
-constexpr size_t INVALID_POSITION = numeric_limits<unsigned int>::max();
 
 // converts an UTF8 string to a wstring
 wstring to_wstring(const string&);
@@ -57,9 +55,6 @@ void create_file_if(const string&);
 // creates settings file if it doesn't exist
 void create_settings_file_if();
 
-// creates statistics file if it doesn't exist
-void create_statistics_file_if(const Quiz&);
-
 // writes elements of a vector on a file
 template<typename T>
 void write_elements(const vector<T>&, const string&, ios_base::openmode, const string&, const string&);
@@ -73,6 +68,12 @@ Resume update_resume(const Resume&, const Quiz&);
 
 // updates the resume file
 void update_resume_file(const Resume&);
+
+// updates the statistics data
+Statistics update_statistics(const Statistics&, const Quiz&);
+
+// updates the statistics file
+void update_statistics_file(const Statistics&);
 
 // updates the questions answers file
 void update_questions_answers_file();
@@ -95,6 +96,9 @@ vector<size_t> get_indexes(const Quiz&, const Resume&, const Quiz::Mode&);
 
 // checks if practice mode
 bool is_practice(const Quiz::Mode&);
+
+// initializes the quiz environment
+void initialize_quiz();
 
 // simple quiz launcher
 [[maybe_unused]] Resume quiz_launcher(const Quiz&, const Resume&, const Quiz::Mode&);
