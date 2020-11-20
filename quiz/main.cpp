@@ -12,9 +12,7 @@ int main()
 try
 {
 	// creates required files
-	create_file_if(questions_answers_file);
-	create_file_if(resume_file);
-	create_settings_file_if();
+	initialize_quiz();
 
 	// retrieves quiz information from file
 	Quiz quiz = get_questions_and_answers();
@@ -25,10 +23,13 @@ try
 	// retrieves resume information from file
 	Resume resume = get_resume_information();
 	resume = update_resume(resume, quiz);
-	const vector<size_t>& retry_indexes = resume.retry_indexes;
-	
-	// sets up resume file
 	update_resume_file(resume);
+	const vector<size_t>& retry_indexes = resume.retry_indexes;
+
+	// retrieves statistics information from file
+	Statistics statistics = get_statistics_information();
+	statistics = update_statistics(statistics, quiz);
+	update_statistics_file(statistics);
 
 	// display main menu
 	display_main_menu();
@@ -47,12 +48,15 @@ try
 		}
 		
 		const char& user_choice = choice[0];	
-		cout << newline;
+
+		// clears screen
+		if(user_choice != exit_character) [[maybe_unused]] int result = system(clear_command.c_str());
 
 		switch (user_choice) {
 		case '1':
 			if (questions.size()) list_elements(questions);
 			else cout << "The list is empty.\n";
+			cout << newline;
 			break;
 
 		case '2':
@@ -61,9 +65,9 @@ try
 				else resume = quiz_launcher(quiz, resume, Quiz::Mode::resume);
 			}
 			else {
-				if(questions.empty()) cout << "There's not a single question to display.\n";
-				else cout << "The number of questions doesn't match the number of answers.\n";
-			}	
+				if(questions.empty()) cout << "There's not a single question to display.\n\n";
+				else cout << "The number of questions doesn't match the number of answers.\n\n";
+			}
 			break;
 
 		case '3':
@@ -71,29 +75,22 @@ try
 				if (resume.retry_position == INVALID_POSITION) resume = quiz_launcher(quiz, resume, Quiz::Mode::practice_normal);
 				else resume = quiz_launcher(quiz, resume, Quiz::Mode::practice_resume);
 			}
-			else cout << "Please enter a valid choice.\n";
+			else cout << "Please enter a valid choice.\n\n";
 			break;
 
 		case exit_character:
 			break;
 
 		default:
-			cout << "Please enter a valid choice.\n";
+			cout << "Please enter a valid choice.\n\n";
 			break;
 		}
 
 		if (user_choice == exit_character) break;
-		else {
-			// clears screen
-			if(user_choice == '1')
-				cout << newline;
-			else
-				[[maybe_unused]] int result = system("clear");
-			display_main_menu();
-		}
+		else display_main_menu();
 	}
 
-	cout << "Goodbye !\n";
+	cout << "\nGoodbye !\n";
 
 	return 0;
 }

@@ -23,6 +23,8 @@ using std::ifstream;
 #include<algorithm>
 using std::find;
 
+#include<stdexcept>
+using std::runtime_error;
 // symbolic names
 constexpr char yes { '$' };
 constexpr char no { '*' };
@@ -35,21 +37,22 @@ const string exit_sequence { "exit" };
 const string empty_line { "$" };
 
 // constant expressions
+const int success_threshold { 10 };
 const size_t maximum_number_of_questions { 3 };
 const size_t minimum_number_of_questions { 10 };
 constexpr size_t INITIAL_POSITION = 0;
 
 // file names
+const string questions_answers_file { "questions_answers.txt" };
+const string resume_file { "resume_quiz.txt" };
+const string statistics_file { "statistics.txt" };
 const string settings_file { "settings.txt" };
 const string temporary_file { "questions_answers_temp.txt" };
 
 // retrieves settings information from file
 vector<size_t> get_settings()
 // retrieves settings information from the settings file
-// the file is created if it doesn't exist
 {
-	create_settings_file_if();
-
 	ifstream file;
 	file.open(settings_file);
 
@@ -68,35 +71,19 @@ vector<size_t> get_settings()
 			if(file) {
 				Property eproperty = properties[sproperty];
 				if(properties.size() == number_of_properties) result[size_t(eproperty)] = value;
-				else 
-					properties.erase(sproperty);
+				else properties.erase(sproperty);
 			}
-			else {
-				cerr << "Error: settings file is corrupted !\n";
-				cout << "Resetting... ";
-
-				file.clear();
-				if(file.is_open()) file.close();
-
-				remove(settings_file.c_str());
-				create_settings_file_if();
-
-				result.clear();
-				result = get_settings();
-
-				cout << "Done...\n\n";
-			}
+			else cerr << "Error: settings file is corrupted !\n";
 		}
 	}
-	else cerr << "Error: Unable to open file.\n";
+	else cerr << "Error: Unable to open settings file.\n";
 
 	return result;
 }
 
-// retrieves quiz information from files
+// retrieves quiz information from file
 Quiz get_questions_and_answers()
 // retrieves questions and answers from the questions_answers file
-// the file is created if it doesn't exist
 {
 	Quiz quiz;
 
@@ -123,12 +110,12 @@ Quiz get_questions_and_answers()
 		}
 		file.close();
 	}
-	else create_file_if(questions_answers_file);
+	else cerr << "Error: Unable to open questions and answers file.\n";
 
 	return quiz;
 }
 
-// gets resume file information
+// retrieves resume information from file
 Resume get_resume_information()
 // retrieves current question position, questions order indexes and retry indexes from resume file
 {
@@ -174,9 +161,38 @@ Resume get_resume_information()
 
 		file.close();
 	}
-	else cerr << "Error: Unable to open file.\n";
+	else cerr << "Error: Unable to open resume file.\n";
 
 	return resume;
+}
+
+// retrieves statistics information from file
+Statistics get_statistics_information()
+// retrieves statistics information from the statistics file, including the number of times a question was well answered.
+{
+	Statistics statistics;
+	vector<size_t>& successes = statistics.successes;
+	vector<size_t>& failures = statistics.failures;
+
+	ifstream file;
+	file.open(statistics_file);
+
+	if (file.is_open()){
+		// retrieves number of times questions were well answered
+		size_t number { 0 };
+
+		while(file >> number){
+			successes.push_back(number);
+			file.ignore(1);
+			file >> number;
+			failures.push_back(number);
+		}
+
+		file.close();
+	}
+	else cerr << "Error: Unable to open statistics file.\n";
+
+	return statistics;
 }
 
 // displays main menu
@@ -245,9 +261,9 @@ void create_settings_file_if(){
 		file.open(settings_file, ios_base::out);
 
 		if(file.is_open()) {
-			file << "question\t0\n";
-			file << "answer_index\t0\n";
-			file << "prompt\t0\n";
+			file << "question\t33\n";
+			file << "answer_index\t33\n";
+			file << "prompt\t90\n";
 
 			file.close();
 		}
@@ -373,6 +389,60 @@ void update_resume_file(const Resume&  resume)
 	write_elements(retry_indexes, resume_file, ios_base::app, " ", " $");
 }
 
+// updates the statistics data
+Statistics update_statistics(const Statistics& statistics, const Quiz& quiz){
+	Statistics updated_statistics;
+	vector<size_t> successes = statistics.successes;
+	vector<size_t> failures = statistics.failures;
+
+	const vector<size_t>& removed = quiz.removed;
+
+	// removes empty questions and answers
+	for (size_t i { 0 }; i < removed.size(); ++i) {
+		const size_t& removed_index = removed[i];
+		successes.erase(successes.begin() + (int) removed_index);
+		failures.erase(failures.begin() + (int) removed_index);
+	}
+
+	// adds newly added questions
+	const size_t questions_size = quiz.questions.size();
+	const size_t successes_size = successes.size();
+
+	if (questions_size > successes_size) {
+		const size_t new_questions = questions_size - successes_size;
+		for (size_t i { 0 }; i < new_questions; ++i) {
+			successes.push_back(0);
+			failures.push_back(0);
+		}
+	}
+
+	updated_statistics.successes = successes;
+	updated_statistics.failures = failures;
+
+	// checks the statistics data
+	if(failures.size() != successes.size()) throw runtime_error("(statistics) size mismatch.");
+
+	return updated_statistics;
+}
+
+// updates the statistics file
+void update_statistics_file(const Statistics& statistics){
+	const vector<size_t>& successes = statistics.successes;
+	const vector<size_t>& failures = statistics.failures;
+
+	if(successes.size() != failures.size()) throw runtime_error("(statistics) corrupted data.");
+
+	fstream file;
+	file.open(statistics_file, ios_base::out);
+
+	if(file.is_open()){
+		for(size_t i { 0 }; i < successes.size(); ++i)
+			file << successes[i] << list_elements_delimiter << failures[i] << newline;
+		file.close();
+	}
+	else cerr << "Error: Unable to open statistics file.\n";
+}
+
 // updates the questions answers file
 void update_questions_answers_file()
 // removes empty questions and answers from file
@@ -391,10 +461,10 @@ void update_questions_answers_file()
 			}
 			destination.close();
 		}
-		else cerr << "Error: Unable to open file.\n";
+		else cerr << "Error: Unable to open destination file.\n";
 		source.close();
 	}
-	else cerr << "Error: Unable to open file.\n";
+	else cerr << "Error: Unable to open source file.\n";
 
 	remove(questions_answers_file.c_str());
 	rename(temporary_file.c_str(), questions_answers_file.c_str());
@@ -427,7 +497,7 @@ void review(const string& question, const string& answer, const size_t& index)
 		case yes:
 		{
 			// clears screen
-			[[maybe_unused]] int result = system("clear");
+			[[maybe_unused]] int result = system(clear_command.c_str());
 
 			// displays mode
 			cout << "[Review]\n";
@@ -507,6 +577,16 @@ bool is_practice(const Quiz::Mode& mode) {
 	else return false;
 }
 
+// initializes the quiz environment
+void initialize_quiz()
+// creates the required files including questions and answers file, resume file, and statistics file
+{
+	create_settings_file_if();
+	create_file_if(questions_answers_file);
+	create_file_if(resume_file);
+	create_file_if(statistics_file);
+}
+
 // quiz launcher
 [[maybe_unused]] Resume quiz_launcher(const Quiz& quiz, const Resume& resume, const Quiz::Mode& mode)
 // (1) displays a question, wait for the user's answer,
@@ -526,6 +606,14 @@ bool is_practice(const Quiz::Mode& mode) {
 
 	size_t retry_position = resume.retry_position;
 	vector<size_t> retry_indexes = (mode == Quiz::Mode::practice_normal)? indexes : resume.retry_indexes;
+
+	// retrieves the statistics information
+	Statistics statistics = get_statistics_information();
+	statistics = update_statistics(statistics, quiz);
+	update_statistics_file(statistics);
+
+	vector<size_t>& successes = statistics.successes;
+	vector<size_t>& failures = statistics.failures;
 
 	// sets up resume file
 	Resume updated_resume { position, indexes, retry_position, retry_indexes };
@@ -553,7 +641,7 @@ bool is_practice(const Quiz::Mode& mode) {
 		}
 
 		// clears screen
-		[[maybe_unused]] int result = system("clear");
+		[[maybe_unused]] int result = system(clear_command.c_str());
 
 		// displays active mode
 		display_active_mode(mode);
@@ -576,7 +664,10 @@ bool is_practice(const Quiz::Mode& mode) {
 		size_t number_of_items = (size_t) count(retry_indexes.begin(), retry_indexes.end(), index);
 
 		// displays current question
-		cout << "\033[" << settings[size_t(Property::question)] << "m" << question << "\033[0m\n\n";
+		// the question is marked with an asterisk if it was well answered a certain nubmer of times
+		const int success = (int) successes[index];
+		const int failure = (int) failures[index];
+		cout << "\033[" << settings[size_t(Property::question)] << "m" << question << ((success - failure > success_threshold)? "*" : "") << "\033[0m\n\n";
 
 		// gets user's answer and checks if the user wants to exit
 		if (get_answer() == exit_sequence) {
@@ -584,6 +675,10 @@ bool is_practice(const Quiz::Mode& mode) {
 				updated_resume.retry_position -= removed_questions;
 				update_resume_file(updated_resume);
 			}
+
+			// clears screen
+			[[maybe_unused]] int result_clear = system(clear_command.c_str());
+
 			return updated_resume;
 		}
 
@@ -605,6 +700,7 @@ bool is_practice(const Quiz::Mode& mode) {
 			{
 				// adds the question index in the retry indexes
 				if (number_of_items < maximum_number_of_questions) retry_indexes.push_back(index);
+				failures[index] = failures[index] + 1;
 			}
 			break;
 
@@ -616,6 +712,7 @@ bool is_practice(const Quiz::Mode& mode) {
 					retry_indexes.erase(it);
 					if (is_practice(mode)) { ++removed_questions; }
 				}
+				successes[index] = successes[index] + 1;
 			}
 			break;
 
@@ -634,6 +731,10 @@ bool is_practice(const Quiz::Mode& mode) {
 			updated_resume.retry_indexes = retry_indexes;
 			update_resume_file(updated_resume);
 
+			// updates statistics file
+			statistics = update_statistics(statistics, quiz);
+			update_statistics_file(statistics);
+
 			if(user_choice == yes || user_choice == alternative_yes){
 				review(question, answer, index); // enables user to review failed question
 			}
@@ -649,6 +750,9 @@ bool is_practice(const Quiz::Mode& mode) {
 	else { updated_resume.retry_position = INVALID_POSITION; }
 	updated_resume.retry_indexes = retry_indexes;
 	update_resume_file(updated_resume);
+
+	// clears screen
+	[[maybe_unused]] int result = system(clear_command.c_str());
 
 	return updated_resume;
 }

@@ -3,34 +3,32 @@
 
 #include "quiz.h"
 #include "resume.h"
+#include "statistics.h"
 
 #include<iostream>
 using std::ios_base;
-
-#include<limits>
-using std::numeric_limits;
 
 // symbolic names
 constexpr char newline { '\n' };
 constexpr char exit_character { 'x' };
 
+const string clear_command { "clear" };
+
 // constant expressions
 const size_t valid_choice_length { 1 };
 const string INVALID_CHOICE = "0";
-constexpr size_t INVALID_POSITION = numeric_limits<unsigned int>::max();
-
-// file names
-const string questions_answers_file { "questions_answers.txt" };
-const string resume_file { "resume_quiz.txt" };
 
 // retrieves settings information from file
 vector<size_t> get_settings();
 
-// retrieves quiz information from files
+// retrieves quiz information from file
 Quiz get_questions_and_answers();
 
-// gets resume file information
+// retrieves resume information from file
 Resume get_resume_information();
+
+// retrieves statistics information from file
+Statistics get_statistics_information();
 
 // displays main menu
 void display_main_menu();
@@ -65,6 +63,12 @@ Resume update_resume(const Resume&, const Quiz&);
 // updates the resume file
 void update_resume_file(const Resume&);
 
+// updates the statistics data
+Statistics update_statistics(const Statistics&, const Quiz&);
+
+// updates the statistics file
+void update_statistics_file(const Statistics&);
+
 // updates the questions answers file
 void update_questions_answers_file();
 
@@ -86,6 +90,9 @@ vector<size_t> get_indexes(const Quiz&, const Resume&, const Quiz::Mode&);
 
 // checks if practice mode
 bool is_practice(const Quiz::Mode&);
+
+// initializes the quiz environment
+void initialize_quiz();
 
 // simple quiz launcher
 [[maybe_unused]] Resume quiz_launcher(const Quiz&, const Resume&, const Quiz::Mode&);
