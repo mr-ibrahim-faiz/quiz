@@ -242,11 +242,11 @@ void create_file_if(const string& file_address)
 // create the file if it doesn't exit
 {
 	fstream file;
-	file.open(file_address, ios_base::in);
+	file.open(file_address, ios_base::in | ios_base::binary);
 
 	if (file.is_open()) file.close();
 	else {
-		file.open(file_address, ios_base::out);
+		file.open(file_address, ios_base::out | ios_base::binary);
 		if(file.is_open()) file.close();
 	}
 }
@@ -254,11 +254,11 @@ void create_file_if(const string& file_address)
 // creates settings file if it doesn't exist
 void create_settings_file_if(){
 	fstream file;
-	file.open(settings_file, ios_base::in);
+	file.open(settings_file, ios_base::in | ios_base::binary);
 
 	if (file.is_open()) file.close();
 	else {
-		file.open(settings_file, ios_base::out);
+		file.open(settings_file, ios_base::out | ios_base::binary);
 
 		if(file.is_open()) {
 			file << "question\t33\n";
@@ -377,16 +377,16 @@ void update_resume_file(const Resume&  resume)
 	const vector<size_t>& retry_indexes = resume.retry_indexes;
 
 	// saves the question position
-	write_single_element(position, resume_file, ios_base::out, " $\n");
+	write_single_element(position, resume_file, ios_base::out | ios_base::binary, " $\n");
 
 	// saves the questions order
-	write_elements(indexes, resume_file, ios_base::app, " ", " $\n");
+	write_elements(indexes, resume_file, ios_base::app | ios_base::binary, " ", " $\n");
 
 	// saves the retry question position
-	write_single_element(retry_position, resume_file, ios_base::app, " $\n");
+	write_single_element(retry_position, resume_file, ios_base::app | ios_base::binary, " $\n");
 
 	// saves retry indexes
-	write_elements(retry_indexes, resume_file, ios_base::app, " ", " $");
+	write_elements(retry_indexes, resume_file, ios_base::app | ios_base::binary, " ", " $");
 }
 
 // updates the statistics data
@@ -433,7 +433,7 @@ void update_statistics_file(const Statistics& statistics){
 	if(successes.size() != failures.size()) throw runtime_error("(statistics) corrupted data.");
 
 	fstream file;
-	file.open(statistics_file, ios_base::out);
+	file.open(statistics_file, ios_base::out | ios_base::binary);
 
 	if(file.is_open()){
 		for(size_t i { 0 }; i < successes.size(); ++i)
