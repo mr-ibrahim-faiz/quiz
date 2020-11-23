@@ -213,6 +213,9 @@ Statistics get_statistics_information()
 	}
 	else cerr << "Error: Unable to open statistics file.\n";
 
+	// checks the statistics data
+	if(successes.size() != failures.size()) throw runtime_error("(statistics) size mismatch.");
+
 	return statistics;
 }
 
@@ -457,7 +460,7 @@ Statistics update_statistics(const Statistics& statistics, const Quiz& quiz){
 	updated_statistics.failures = failures;
 
 	// checks the statistics data
-	if(failures.size() != successes.size()) throw runtime_error("(statistics) size mismatch.");
+	if(successes.size() != failures.size()) throw runtime_error("(statistics) size mismatch.");
 
 	return updated_statistics;
 }
@@ -467,7 +470,8 @@ void update_statistics_file(const Statistics& statistics){
 	const vector<size_t>& successes = statistics.successes;
 	const vector<size_t>& failures = statistics.failures;
 
-	if(successes.size() != failures.size()) throw runtime_error("(statistics) corrupted data.");
+	// checks the statistics data
+	if(successes.size() != failures.size()) throw runtime_error("(statistics) size mismatch.");
 
 	fstream file;
 	file.open(statistics_file, ios_base::out | ios_base::binary);
@@ -627,35 +631,36 @@ vector<size_t> get_ignored_questions(const Statistics& statistics){
 }
 
 // gets question number
-size_t get_question_number(const vector<size_t>& indexes, const vector<size_t>& ignored_questions, const size_t& position){
+size_t get_question_number(const vector<size_t>& questions, const vector<size_t>& ignored_questions, const size_t& position){
 	size_t question_number { position + 1 };
-	for(size_t i { 0 }; i < indexes.size(); ++i){
+	for(size_t i { 0 }; i < questions.size(); ++i){
 		if(i == position) break;
+		const size_t& question = questions[i];
 		for(const size_t& ignored_question : ignored_questions)
-			if(ignored_question == indexes[i]) --question_number;
+			if(ignored_question == question) --question_number;
 	}
 	return question_number;
 }
 
 // gets number of questions
-size_t get_number_of_questions(vector<size_t> indexes, const vector<size_t>& ignored_questions, const Quiz::Mode& mode){
-	size_t number_of_questions {};
+size_t get_number_of_questions(vector<size_t> questions, const vector<size_t>& ignored_questions, const Quiz::Mode& mode){
+	size_t number_of_questions { 0 };
 
 	switch (mode) {
 	case Quiz::Mode::normal: case Quiz::Mode::resume:
-		number_of_questions = indexes.size() - ignored_questions.size();
+		number_of_questions = questions.size() - ignored_questions.size();
 		break;
 
 	case Quiz::Mode::practice_normal: case Quiz::Mode::practice_resume:
 	{
 		for(const size_t& ignored_question: ignored_questions){
-			vector<size_t> updated_indexes;
-			for(const size_t& index: indexes){
-				if(ignored_question != index) updated_indexes.push_back(index);
+			vector<size_t> updated_questions;
+			for(const size_t& question: questions){
+				if(ignored_question != question) updated_questions.push_back(question);
 			}
-			indexes = updated_indexes;
+			questions = updated_questions;
 		}
-		number_of_questions = indexes.size();
+		number_of_questions = questions.size();
 	}
 		break;
 	}
