@@ -64,7 +64,7 @@ template<typename T>
 void write_single_element(const T&, const string&, ios_base::openmode, const string&);
 
 // updates the resume data
-Resume update_resume(const Resume&, const Quiz&);
+Resume update_resume(const Resume&, const Quiz&, const Statistics&);
 
 // updates the resume file
 void update_resume_file(const Resume&);
@@ -93,6 +93,15 @@ size_t get_position(const Resume&, const Quiz::Mode&);
 
 // gets indexes 
 vector<size_t> get_indexes(const Quiz&, const Resume&, const Quiz::Mode&);
+
+// gets ignored questions
+vector<size_t> get_ignored_questions(const Statistics&);
+
+// gets question number
+size_t get_question_number(const vector<size_t>&, const vector<size_t>&, const size_t&);
+
+// gets number of questions
+size_t get_number_of_questions(vector<size_t>, const vector<size_t>&, const Quiz::Mode&);
 
 // checks if practice mode
 bool is_practice(const Quiz::Mode&);

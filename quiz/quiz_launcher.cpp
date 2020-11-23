@@ -337,7 +337,7 @@ void write_single_element(const T& t, const string& file_name, ios_base::openmod
 }
 
 // updates the resume data
-Resume update_resume(const Resume& resume, const Quiz& quiz)
+Resume update_resume(const Resume& resume, const Quiz& quiz, const Statistics& statistics)
 {
 	Resume updated_resume;
 	updated_resume.position = resume.position;
@@ -347,6 +347,9 @@ Resume update_resume(const Resume& resume, const Quiz& quiz)
 	vector<size_t> retry_indexes = resume.retry_indexes;
 
 	const vector<size_t>& removed = quiz.removed;
+
+	// gets ignored questions
+	const vector<size_t> ignored_questions = get_ignored_questions(statistics);
 
 	// removes empty questions and answers
 	for (size_t i { 0 }; i < removed.size(); ++i) {
@@ -369,6 +372,15 @@ Resume update_resume(const Resume& resume, const Quiz& quiz)
 			if (index != removed_index) {
 				updated_retry_indexes.push_back((index > removed_index) ? index - 1 : index);
 			}
+		}
+		retry_indexes = updated_retry_indexes;
+	}
+
+	// removes questions that exceeded the success threshold
+	for(const size_t& ignored_question: ignored_questions){
+		vector<size_t> updated_retry_indexes;
+		for(const size_t& retry_index: retry_indexes){
+			if(ignored_question != retry_index) updated_retry_indexes.push_back(retry_index);
 		}
 		retry_indexes = updated_retry_indexes;
 	}
@@ -601,6 +613,56 @@ vector<size_t> get_indexes(const Quiz& quiz, const Resume& resume, const Quiz::M
 	return indexes;
 }
 
+// gets ignored questions
+vector<size_t> get_ignored_questions(const Statistics& statistics){
+	vector<size_t> ignored_questions;
+	const vector<size_t> successes = statistics.successes;
+	const vector<size_t> failures = statistics.failures;
+	for(size_t i = 0; i < successes.size(); ++i){
+		const int success = (int) successes[i];
+		const int failure = (int) failures[i];
+		if(success - failure > success_threshold) ignored_questions.push_back(i);
+	}
+	return ignored_questions;
+}
+
+// gets question number
+size_t get_question_number(const vector<size_t>& indexes, const vector<size_t>& ignored_questions, const size_t& position){
+	size_t question_number { position + 1 };
+	for(size_t i { 0 }; i < indexes.size(); ++i){
+		if(i == position) break;
+		for(const size_t& ignored_question : ignored_questions)
+			if(ignored_question == indexes[i]) --question_number;
+	}
+	return question_number;
+}
+
+// gets number of questions
+size_t get_number_of_questions(vector<size_t> indexes, const vector<size_t>& ignored_questions, const Quiz::Mode& mode){
+	size_t number_of_questions {};
+
+	switch (mode) {
+	case Quiz::Mode::normal: case Quiz::Mode::resume:
+		number_of_questions = indexes.size() - ignored_questions.size();
+		break;
+
+	case Quiz::Mode::practice_normal: case Quiz::Mode::practice_resume:
+	{
+		for(const size_t& ignored_question: ignored_questions){
+			vector<size_t> updated_indexes;
+			for(const size_t& index: indexes){
+				if(ignored_question != index) updated_indexes.push_back(index);
+			}
+			indexes = updated_indexes;
+		}
+		number_of_questions = indexes.size();
+	}
+		break;
+	}
+
+	return number_of_questions;
+}
+
 // checks if practice mode
 bool is_practice(const Quiz::Mode& mode) {
 	if (mode == Quiz::Mode::practice_normal || mode == Quiz::Mode::practice_resume) return true;
@@ -651,6 +713,7 @@ void initialize_quiz()
 		updated_resume.position = resume.position;
 		updated_resume.indexes = resume.indexes;
 	}
+	updated_resume = update_resume(updated_resume, quiz, statistics);
 	update_resume_file(updated_resume);
 
 	size_t removed_questions { 0 };
@@ -661,14 +724,19 @@ void initialize_quiz()
 		// calls practice mode if necessary
 		if(!is_practice(mode)){
 			if (retry_indexes.size() >= (minimum_number_of_questions*factor)) {
-				// cout << "[Practice]\n\n";
-
 				updated_resume = quiz_launcher(quiz, updated_resume, (retry_position == INVALID_POSITION)? Quiz::Mode::practice_normal : Quiz::Mode::practice_resume);
-
 				factor = retry_indexes.size() / minimum_number_of_questions + 1; // updates factor
-				// cout << "\n[Quiz]\n\n";
 			}
 		}
+
+		// current question and answer and question's index
+		const string& question = questions[indexes[position]];
+		const string& answer = answers[indexes[position]];
+		const size_t& index = indexes[position];
+
+		const int success = (int) successes[index];
+		const int failure = (int) failures[index];
+		if(success - failure > success_threshold) continue;
 
 		// clears screen
 		[[maybe_unused]] int result = system(clear_command.c_str());
@@ -677,26 +745,27 @@ void initialize_quiz()
 		display_active_mode(mode);
 
 		// displays current question position
-		size_t question_number = position + 1;
-		cout << question_number << "\\" << indexes_size << newline;
+		const vector<size_t> ignored_questions = get_ignored_questions(statistics);
+
+		const size_t question_number = get_question_number(indexes, ignored_questions, position);
+		const size_t number_of_questions = get_number_of_questions(indexes, ignored_questions, mode);
+		cout << question_number << "\\" << number_of_questions << newline;
+
+		// updates statistics file
+		statistics = update_statistics(statistics, quiz);
+		update_statistics_file(statistics);
 
 		// updates resume file
 		if (!is_practice(mode)) { updated_resume.position = position; }
 		else { updated_resume.retry_position = position; }
+		updated_resume = update_resume(updated_resume, quiz, statistics);
 		update_resume_file(updated_resume);
-
-		// current question and answer and question's index
-		const string& question = questions[indexes[position]];
-		const string& answer = answers[indexes[position]];
-		const size_t& index = indexes[position];
 
 		// keeps track of the number of a specific item in retry list
 		size_t number_of_items = (size_t) count(retry_indexes.begin(), retry_indexes.end(), index);
 
 		// displays current question
-		// the question is marked with an asterisk if it was well answered a certain nubmer of times
-		const int success = (int) successes[index];
-		const int failure = (int) failures[index];
+		// SET FOR DEPRECATION: the question is marked with an asterisk if it was well answered a certain nubmer of times
 		int translation_mode = _setmode(_fileno(stdout), _O_U16TEXT);
 		string squestion = "\033[" + to_string(settings[size_t(Property::question)]) + "m" + question + ((success - failure > success_threshold)? "*" : "") + "\033[0m\n\n";
 		wprintf(L"%ls", to_wstring(squestion).data());
@@ -705,7 +774,13 @@ void initialize_quiz()
 		// gets user's answer and checks if the user wants to exit
 		if (get_answer() == exit_sequence) {
 			if (is_practice(mode)) {
+				// updates statistics file
+				statistics = update_statistics(statistics, quiz);
+				update_statistics_file(statistics);
+
+				// updates resume file
 				updated_resume.retry_position -= removed_questions;
+				updated_resume = update_resume(updated_resume, quiz, statistics);
 				update_resume_file(updated_resume);
 			}
 
@@ -762,13 +837,14 @@ void initialize_quiz()
 				continue;
 			}
 
-			// updates resume file
-			updated_resume.retry_indexes = retry_indexes;
-			update_resume_file(updated_resume);
-
 			// updates statistics file
 			statistics = update_statistics(statistics, quiz);
 			update_statistics_file(statistics);
+
+			// updates resume file
+			updated_resume.retry_indexes = retry_indexes;
+			updated_resume = update_resume(updated_resume, quiz, statistics);
+			update_resume_file(updated_resume);
 
 			if(user_choice == yes || user_choice == alternative_yes){
 				review(question, answer, index); // enables user to review failed question
@@ -780,10 +856,15 @@ void initialize_quiz()
 		if (position != indexes_size - 1) cout << newline;
 	}
 
+	// updates statistics file
+	statistics = update_statistics(statistics, quiz);
+	update_statistics_file(statistics);
+
 	// updates resume file
 	if (!is_practice(mode)) { updated_resume.position = INVALID_POSITION; }
 	else { updated_resume.retry_position = INVALID_POSITION; }
 	updated_resume.retry_indexes = retry_indexes;
+	updated_resume = update_resume(updated_resume, quiz, statistics);
 	update_resume_file(updated_resume);
 
 	// clears screen
