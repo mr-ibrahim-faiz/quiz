@@ -20,16 +20,18 @@ try
 	const vector<string>& questions = quiz.questions;
 	const vector<string>& answers = quiz.answers;
 
-	// retrieves resume information from file
-	Resume resume = get_resume_information();
-	resume = update_resume(resume, quiz);
-	update_resume_file(resume);
-	const vector<size_t>& retry_indexes = resume.retry_indexes;
-
 	// retrieves statistics information from file
 	Statistics statistics = get_statistics_information();
 	statistics = update_statistics(statistics, quiz);
 	update_statistics_file(statistics);
+
+	vector<size_t> ignored_questions;
+
+	// retrieves resume information from file
+	Resume resume = get_resume_information();
+	resume = update_resume(resume, quiz, statistics);
+	update_resume_file(resume);
+	const vector<size_t>& retry_indexes = resume.retry_indexes;
 
 	// display main menu
 	display_main_menu();
@@ -42,9 +44,18 @@ try
 			quiz = get_questions_and_answers();
 			if (!quiz.removed.empty()) update_questions_answers_file();
 
+			// retrieves statistics information from file
+			statistics = get_statistics_information();
+			statistics = update_statistics(statistics, quiz);
+			update_statistics_file(statistics);
+
 			// retrieves resume information from file
 			resume = get_resume_information();
-			resume = update_resume(resume, quiz);
+			resume = update_resume(resume, quiz, statistics);
+			update_resume_file(resume);
+
+			// retrieves ignored questions
+			ignored_questions = get_ignored_questions(statistics);
 		}
 		
 		const char& user_choice = choice[0];	
@@ -61,7 +72,8 @@ try
 
 		case '2':
 			if (!questions.empty() && questions.size() == answers.size()) {
-				if(resume.position == INVALID_POSITION) resume = quiz_launcher(quiz, resume, Quiz::Mode::normal);
+				if(ignored_questions.size() == questions.size()) cout << "Well done. The Success threshold has been exceeded!\n\n";
+				else if(resume.position == INVALID_POSITION) resume = quiz_launcher(quiz, resume, Quiz::Mode::normal);
 				else resume = quiz_launcher(quiz, resume, Quiz::Mode::resume);
 			}
 			else {
