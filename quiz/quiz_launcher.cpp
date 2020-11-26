@@ -52,9 +52,9 @@ const string exit_sequence { "exit" };
 const string empty_line { "$" };
 
 // constant expressions
-const int success_threshold { 10 };
-const size_t maximum_number_of_questions { 3 };
-const size_t minimum_number_of_questions { 10 };
+constexpr int success_threshold { 10 };
+constexpr size_t maximum_number_of_questions { 3 };
+constexpr size_t minimum_number_of_questions { 10 };
 constexpr size_t INITIAL_POSITION = 0;
 
 // converts an UTF8 string to a wstring
@@ -620,8 +620,8 @@ vector<size_t> get_indexes(const Quiz& quiz, const Resume& resume, const Quiz::M
 // gets ignored questions
 vector<size_t> get_ignored_questions(const Statistics& statistics){
 	vector<size_t> ignored_questions;
-	const vector<size_t> successes = statistics.successes;
-	const vector<size_t> failures = statistics.failures;
+	const vector<size_t>& successes = statistics.successes;
+	const vector<size_t>& failures = statistics.failures;
 	for(size_t i = 0; i < successes.size(); ++i){
 		const int success = (int) successes[i];
 		const int failure = (int) failures[i];
@@ -739,6 +739,7 @@ void initialize_quiz()
 		const string& answer = answers[indexes[position]];
 		const size_t& index = indexes[position];
 
+		// questions that exceeds the success threshold are ignored
 		const int success = (int) successes[index];
 		const int failure = (int) failures[index];
 		if(success - failure > success_threshold) continue;
