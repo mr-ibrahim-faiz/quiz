@@ -355,8 +355,10 @@ Resume update_resume(const Resume& resume, const Quiz& quiz, const Statistics& s
 	const vector<size_t> ignored_questions = get_ignored_questions(statistics);
 
 	// removes empty questions and answers
-	for (size_t i { 0 }; i < removed.size(); ++i) {
+	for(size_t i { 0 }; i < removed.size(); ++i) {
 		const size_t& removed_index = removed[i];
+		size_t& updated_position = updated_resume.position;
+		size_t& updated_retry_position = updated_resume.retry_position;
 
 		vector<size_t> updated_indexes;
 		for (size_t j { 0 }; j < indexes.size(); ++j) {
@@ -364,6 +366,9 @@ Resume update_resume(const Resume& resume, const Quiz& quiz, const Statistics& s
 
 			if (index != removed_index) {
 				updated_indexes.push_back((index > removed_index) ? index - 1 : index);
+			}
+			else {
+				if(updated_position != INVALID_POSITION && updated_position > j) --updated_position;
 			}
 		}
 		indexes = updated_indexes;
@@ -374,6 +379,9 @@ Resume update_resume(const Resume& resume, const Quiz& quiz, const Statistics& s
 
 			if (index != removed_index) {
 				updated_retry_indexes.push_back((index > removed_index) ? index - 1 : index);
+			}
+			else {
+				if(updated_retry_position != INVALID_POSITION && updated_retry_position > j) --updated_retry_position;
 			}
 		}
 		retry_indexes = updated_retry_indexes;
