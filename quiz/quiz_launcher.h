@@ -13,7 +13,8 @@ using std::wstring;
 
 // symbolic names
 constexpr char newline { '\n' };
-constexpr char exit_character { 'x' };
+constexpr char exit_choice { 'x' };
+constexpr char updater_choice { 's' };
 
 const string clear_command { "cls" };
 

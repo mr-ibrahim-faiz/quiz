@@ -61,7 +61,7 @@ try
 		const char& user_choice = choice[0];	
 
 		// clears screen
-		if(user_choice != exit_character) [[maybe_unused]] int result = system(clear_command.c_str());
+		if(user_choice != exit_choice) [[maybe_unused]] int result = system(clear_command.c_str());
 
 		switch (user_choice) {
 		case '1':
@@ -90,7 +90,17 @@ try
 			else cout << "Please enter a valid choice.\n\n";
 			break;
 
-		case exit_character:
+		case updater_choice:
+		{
+			// launches statistics updater
+			statistics_updater();
+
+			// clears screen
+			[[maybe_unused]] int result = system(clear_command.c_str());
+		}
+			break;
+
+		case exit_choice:
 			break;
 
 		default:
@@ -98,7 +108,7 @@ try
 			break;
 		}
 
-		if (user_choice == exit_character) break;
+		if (user_choice == exit_choice) break;
 		else display_main_menu();
 	}
 
