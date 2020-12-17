@@ -60,7 +60,7 @@ void statistics_updater(){
 
 		switch (user_choice) {
 		case '1':
-			// clears the ignored questions list by reducing every success count by 1.
+			// clears the ignored questions list by reducing the success counts.
 			while(ignored_questions.size()){
 				for(const size_t& index: ignored_questions){
 					successes[index] = successes[index] - 1;
