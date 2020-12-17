@@ -210,6 +210,7 @@ void display_main_menu() {
 	cout << "[1] List Questions\n";
 	cout << "[2] " << (position != INVALID_POSITION ? "Resume " : "") << "Quiz" << newline;
 	if(indexes_size) cout << "[3] " << ((retry_position != INVALID_POSITION)? "Resume " : "") << "Practice (" << indexes_size << ")\n";
+	cout << "[u] Updater\n";
 	cout << "[x] Exit\n";
 }
 
@@ -331,7 +332,7 @@ Resume update_resume(const Resume& resume, const Quiz& quiz, const Statistics& s
 	const vector<size_t> ignored_questions = get_ignored_questions(statistics);
 
 	// removes empty questions and answers
-	for (size_t i { 0 }; i < removed.size(); ++i) {
+	for(size_t i { 0 }; i < removed.size(); ++i) {
 		const size_t& removed_index = removed[i];
 		size_t& updated_position = updated_resume.position;
 		size_t& updated_retry_position = updated_resume.retry_position;

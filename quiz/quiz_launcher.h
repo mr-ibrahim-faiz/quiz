@@ -10,7 +10,8 @@ using std::ios_base;
 
 // symbolic names
 constexpr char newline { '\n' };
-constexpr char exit_character { 'x' };
+constexpr char exit_choice { 'x' };
+constexpr char updater_choice { 'u' };
 
 const string clear_command { "clear" };
 
