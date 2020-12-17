@@ -25,6 +25,6 @@ struct Statistics {
 void display_updater_menu();
 
 // statistics updater
-[[maybe_unused]] void statistics_updater();
+void statistics_updater();
 
 #endif

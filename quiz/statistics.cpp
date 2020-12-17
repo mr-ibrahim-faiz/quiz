@@ -11,7 +11,7 @@ void display_updater_menu(){
 }
 
 // statistics updater
-[[maybe_unused]] void statistics_updater(){
+void statistics_updater(){
 	// retrieves quiz information from file
 	Quiz quiz = get_questions_and_answers();
 	if (!quiz.removed.empty()) update_questions_answers_file();
