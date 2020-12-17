@@ -230,6 +230,7 @@ void display_main_menu() {
 	cout << "[1] List Questions\n";
 	cout << "[2] " << (position != INVALID_POSITION ? "Resume " : "") << "Quiz" << newline;
 	if(indexes_size) cout << "[3] " << ((retry_position != INVALID_POSITION)? "Resume " : "") << "Practice (" << indexes_size << ")\n";
+	cout << "[s] Statistics\n";
 	cout << "[x] Exit\n";
 }
 
