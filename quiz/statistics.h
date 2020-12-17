@@ -24,7 +24,7 @@ struct Statistics {
 // displays statistics menu
 void display_updater_menu();
 
-// statistics launcher
+// statistics updater
 [[maybe_unused]] void statistics_updater();
 
 #endif

@@ -10,7 +10,7 @@ void display_updater_menu(){
 	cout << "[x] Exit\n";
 }
 
-// statistics launcher
+// statistics updater
 [[maybe_unused]] void statistics_updater(){
 	// retrieves quiz information from file
 	Quiz quiz = get_questions_and_answers();
