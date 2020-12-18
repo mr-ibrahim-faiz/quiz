@@ -1,3 +1,4 @@
+#include "updater.h"
 #include "quiz_launcher.h"
 
 #include<iostream>
