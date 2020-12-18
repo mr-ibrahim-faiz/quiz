@@ -8,6 +8,14 @@ using std::cerr;
 #include<stdexcept>
 using std::exception;
 
+// messages
+const string message_empty_list { "The list is empty." };
+const string message_no_questions { "There's not a single question to display." };
+const string message_invalid_choice { "Please enter a valid choice." };
+const string message_quiz_mismatch { "The number of questions doesn't match the number of answers." };
+const string message_success_threshold_exceeded { "Well done. The Success threshold has been exceeded!" };
+const string message_exit { "Goodbye !" };
+
 int main()
 try
 {
@@ -66,19 +74,19 @@ try
 		switch (user_choice) {
 		case '1':
 			if (questions.size()) list_elements(questions);
-			else cout << "The list is empty.\n";
+			else cout << message_empty_list << newline;
 			cout << newline;
 			break;
 
 		case '2':
 			if (!questions.empty() && questions.size() == answers.size()) {
-				if(ignored_questions.size() == questions.size()) cout << "Well done. The Success threshold has been exceeded!\n\n";
+				if(ignored_questions.size() == questions.size()) cout << message_success_threshold_exceeded << newline << newline;
 				else if(resume.position == INVALID_POSITION) resume = quiz_launcher(quiz, resume, Quiz::Mode::normal);
 				else resume = quiz_launcher(quiz, resume, Quiz::Mode::resume);
 			}
 			else {
-				if(questions.empty()) cout << "There's not a single question to display.\n\n";
-				else cout << "The number of questions doesn't match the number of answers.\n\n";
+				if(questions.empty()) cout << message_no_questions << newline << newline;
+				else cout << message_quiz_mismatch << newline << newline;
 			}
 			break;
 
@@ -87,7 +95,7 @@ try
 				if (resume.retry_position == INVALID_POSITION) resume = quiz_launcher(quiz, resume, Quiz::Mode::practice_normal);
 				else resume = quiz_launcher(quiz, resume, Quiz::Mode::practice_resume);
 			}
-			else cout << "Please enter a valid choice.\n\n";
+			else cout << message_invalid_choice << newline << newline;
 			break;
 
 		case updater_choice:
@@ -104,7 +112,8 @@ try
 			break;
 
 		default:
-			cout << "Please enter a valid choice.\n\n";
+			cout << message_invalid_choice << newline;
+			cout << newline;
 			break;
 		}
 
@@ -112,7 +121,8 @@ try
 		else display_main_menu();
 	}
 
-	cout << "\nGoodbye !\n";
+	cout << newline;
+	cout << message_exit << newline;
 
 	return 0;
 }
