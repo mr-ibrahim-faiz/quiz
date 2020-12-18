@@ -4,14 +4,14 @@
 using std::cin;
 using std::cout;
 
-// displays statistics menu
+// displays updater menu
 void display_updater_menu(){
 	cout << "[1] Include ignored questions\n";
 	cout << "[x] Exit\n";
 }
 
-// statistics updater
-void statistics_updater(){
+// updater
+void updater(){
 	// retrieves quiz information from file
 	Quiz quiz = get_questions_and_answers();
 	if (!quiz.removed.empty()) update_questions_answers_file();
