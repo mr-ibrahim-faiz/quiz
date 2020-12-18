@@ -21,10 +21,4 @@ struct Statistics {
 	vector<size_t> failures; // number of times questions were not well answered
 };
 
-// displays statistics menu
-void display_updater_menu();
-
-// statistics updater
-void statistics_updater();
-
 #endif
