@@ -1,8 +1,13 @@
+#include "updater.h"
 #include "quiz_launcher.h"
 
 #include<iostream>
 using std::cin;
 using std::cout;
+
+// messages
+const string message_list_cleared { "The ignored questions list has been cleared." };
+const string message_invalid_choice { "Please enter a valid choice." };
 
 // displays updater menu
 void display_updater_menu(){
@@ -70,14 +75,14 @@ void updater(){
 				ignored_questions = get_ignored_questions(statistics);
 			}
 			update_statistics_file(statistics);
-			cout << "The ignored questions list has been cleared.\n\n";
+			cout << message_list_cleared << newline << newline;
 			break;
 
 		case exit_choice:
 			break;
 
 		default:
-			cout << "Please enter a valid choice.\n\n";
+			cout << message_invalid_choice << newline << newline;
 			break;
 		}
 
