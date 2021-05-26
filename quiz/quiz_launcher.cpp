@@ -125,7 +125,7 @@ Quiz get_questions_and_answers()
 			file >> ws;
 
 			line.clear();
-			getline(file, line, file_line_delimiter);
+			getline(file, line);
 			if(!line.empty()) answers.push_back(line); // an empty line answer is considered "removed" by the program
 			file >> ws;
 		}
