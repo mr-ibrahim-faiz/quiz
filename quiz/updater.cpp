@@ -5,13 +5,19 @@
 using std::cin;
 using std::cout;
 
+// constant expressions
+constexpr size_t INITIAL_POSITION = 0;
+
 // messages
 const string message_list_cleared { "The ignored questions list has been cleared." };
 const string message_invalid_choice { "Please enter a valid choice." };
+const string message_position_set{ "The quiz position has been changed." };
 
 // displays updater menu
 void display_updater_menu(){
 	cout << "[1] Include ignored questions\n";
+	cout << "[2] Go to previous Quiz position.\n";
+	cout << "[3] Go to previous Practice position.\n";
 	cout << "[x] Exit\n";
 }
 
@@ -76,6 +82,30 @@ void updater(){
 			}
 			update_statistics_file(statistics);
 			cout << message_list_cleared << newline << newline;
+			break;
+
+		case '2': case '3':
+		{
+			// sets the quiz position to the previous one
+			// updates resume file
+			Resume updated_resume = resume;
+			Quiz::Mode mode = Quiz::Mode(user_choice - '2');
+
+			if (is_practice(mode)) {
+				if (resume.retry_position != INVALID_POSITION && resume.retry_position != INITIAL_POSITION) {
+					updated_resume.retry_position = resume.retry_position - 1;
+				}
+			}
+			else {
+				if (resume.position != INVALID_POSITION && resume.position != INITIAL_POSITION) {
+					updated_resume.position = resume.position - 1;
+				}
+			}
+
+			updated_resume = update_resume(updated_resume, quiz, statistics);
+			update_resume_file(updated_resume);
+			cout << message_position_set << newline << newline;
+		}
 			break;
 
 		case exit_choice:
